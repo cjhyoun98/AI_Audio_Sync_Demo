@@ -14,11 +14,17 @@ from flask_cors import CORS
 import anthropic
 
 app = Flask(__name__)
-CORS(app)  # 브라우저 CORS 허용
+CORS(app, origins=[
+    'https://cjhyoun98.github.io',
+    'http://localhost:5000',
+    'http://127.0.0.1:5000',
+    'null'  # 로컬 파일 직접 열 때
+])
 
 # ── API 키 설정 ─────────────────────────────────────────────────────────────
-# 여기에 발급받은 Claude API 키를 입력하세요
-API_KEY = os.environ.get('API_KEY', '')
+# 로컬: 여기에 직접 입력
+# 배포(Render): 환경변수 API_KEY 로 설정 (코드에 키 노출 없음)
+API_KEY = os.environ.get('API_KEY', '여기에_API_키_입력')  # sk-ant-api03-...
 
 # ── 프롬프트 전문 ──────────────────────────────────────────────────────────
 
@@ -369,8 +375,10 @@ def ping():
 
 
 if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 5000))
+    is_local = os.environ.get('RENDER') is None
     print("\n" + "="*40)
     print("AI Sound Sync 서버가 시작되었습니다.")
-    print("접속 주소: http://localhost:5000")
+    print(f"접속 주소: http://localhost:{port}")
     print("="*40 + "\n")
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=port, debug=is_local)

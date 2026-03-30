@@ -1,0 +1,1659 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Sound Sync Pipeline — Portfolio</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500&family=Noto+Sans+KR:wght@300;400;500&display=swap');
+:root{
+  --bg:#f8f9fa;--bg2:#f1f3f5;--bg3:#ffffff;--bg4:#e9ecef;
+  --border:#dee2e6;--border2:#ced4da;
+  --txt:#212529;--txt2:#6c757d;--txt3:#adb5bd;
+  --accent:#1971c2;--abg:#e7f5ff;--alt:#74c0fc;
+  --green:#2f9e44;--gbg:#ebfbee;
+  --red:#c92a2a;--rbg:#fff5f5;
+  --orange:#e67700;--obg:#fff9db;
+  --code:#f1f3f5;
+  --trk:38px;--rh:24px;--hw:155px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--txt);font-family:'Inter','Noto Sans KR',sans-serif;font-size:14px;min-height:100vh;}
+nav{position:sticky;top:0;z-index:100;background:rgba(248,249,250,.97);backdrop-filter:blur(8px);border-bottom:1px solid var(--border);height:50px;display:flex;align-items:center;padding:0 28px;}
+.nl{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:500;color:var(--txt);margin-right:36px;}.nl em{color:var(--accent);font-style:normal;}
+.na{padding:0 14px;height:50px;display:flex;align-items:center;font-size:12px;font-weight:500;color:var(--txt2);text-decoration:none;border-bottom:2px solid transparent;cursor:pointer;transition:color .15s,border-color .15s;white-space:nowrap;}
+.na:hover{color:var(--txt);}.na.on{color:var(--accent);border-bottom-color:var(--accent);}
+.nsp{flex:1;}
+.ntag{font-family:'JetBrains Mono',monospace;font-size:9px;padding:3px 9px;background:var(--abg);color:var(--accent);border:1px solid var(--alt);border-radius:3px;}
+section{display:none;}section.on{display:block;}
+
+/* DEMO */
+.dw{display:grid;grid-template-columns:290px 1fr;min-height:calc(100vh - 50px);}
+.sb{background:var(--bg3);border-right:1px solid var(--border);display:flex;flex-direction:column;}
+.ss{padding:14px 16px;border-bottom:1px solid var(--border);}
+.sl{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--txt3);margin-bottom:10px;}
+.vd{border:1.5px dashed var(--border2);min-height:110px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer;color:var(--txt3);font-size:11px;border-radius:4px;transition:border-color .2s,background .2s;}
+.vd:hover,.vd.ov{border-color:var(--accent);background:var(--abg);color:var(--accent);}
+.vi{font-size:22px;opacity:.25;}
+.vthumb video{width:100%;display:block;max-height:130px;background:#111;border-radius:3px;}
+.vn{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--txt2);text-align:center;padding:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.fl{font-size:10px;font-weight:500;color:var(--txt2);margin-bottom:4px;display:block;}
+.fi{width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--txt);font-family:'JetBrains Mono',monospace;font-size:11px;padding:7px 9px;border-radius:3px;outline:none;transition:border-color .15s;}
+.fi:focus{border-color:var(--accent);background:#fff;}.fi::placeholder{color:var(--txt3);}
+.fn{font-size:10px;color:var(--txt3);margin-top:3px;line-height:1.5;}
+.ab{width:100%;padding:10px;background:var(--accent);color:#fff;font-size:12px;font-weight:600;border:none;cursor:pointer;border-radius:3px;transition:background .15s,opacity .15s;}
+.ab:hover{background:#1864ab;}.ab:disabled{opacity:.3;cursor:not-allowed;}.ab.run{background:#495057;}
+.pg{display:none;margin-top:10px;background:var(--bg2);border:1px solid var(--border);border-radius:3px;padding:12px;}
+.ps{font-size:11px;color:var(--txt2);padding:2px 0;display:flex;align-items:center;gap:6px;}
+.ps::before{content:'○';font-size:9px;color:var(--txt3);}
+.ps.d{color:var(--green);}.ps.d::before{content:'✓';color:var(--green);}
+.ps.a{color:var(--accent);}.ps.a::before{content:'●';color:var(--accent);}
+.pbw{height:2px;background:var(--border);margin-top:8px;border-radius:1px;}
+.pb{height:2px;background:var(--accent);width:0;transition:width .4s;border-radius:1px;}
+.jp{width:100%;height:55px;background:var(--bg2);border:1px solid var(--border);color:#2f9e44;font-family:'JetBrains Mono',monospace;font-size:9px;padding:6px 8px;resize:none;outline:none;border-radius:3px;}
+.r2{display:flex;gap:6px;margin-top:7px;}
+.mn{display:flex;flex-direction:column;min-height:0;overflow:hidden;}
+.rtbar{display:flex;align-items:center;background:var(--bg3);border-bottom:1px solid var(--border);padding:0 16px;flex-shrink:0;}
+.rt{padding:12px 16px;font-size:12px;font-weight:500;color:var(--txt2);cursor:pointer;border-bottom:2px solid transparent;transition:color .12s,border-color .12s;white-space:nowrap;}
+.rt:hover{color:var(--txt);}.rt.on{color:var(--accent);border-bottom-color:var(--accent);}
+.rtsp{flex:1;}
+.rtm{font-size:11px;color:var(--txt2);margin-right:12px;}.rtm span{color:var(--txt);font-weight:500;}
+.rttc{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent);}
+.tlp{display:none;flex:1;flex-direction:column;overflow:hidden;min-height:0;}.tlp.on{display:flex;}
+.tlem{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;color:var(--txt3);font-size:12px;}
+.tlei{font-size:28px;opacity:.12;}
+.tlb{display:flex;flex:1;overflow:hidden;min-height:0;}
+.tlh{width:var(--hw);flex-shrink:0;background:var(--bg3);border-right:1px solid var(--border);overflow-y:auto;overflow-x:hidden;}.tlh::-webkit-scrollbar{width:0;}
+.tlc{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;}
+.rw{height:var(--rh);background:var(--bg2);border-bottom:1px solid var(--border);overflow:hidden;position:relative;cursor:pointer;flex-shrink:0;}
+.rc{position:absolute;top:0;left:0;}
+.phr{position:absolute;top:0;bottom:0;width:1px;background:var(--accent);pointer-events:none;z-index:20;display:none;}
+.phr::before{content:'';position:absolute;top:0;left:-4px;border:4px solid transparent;border-top:7px solid var(--accent);}
+.ts{flex:1;overflow:auto;position:relative;}.ts::-webkit-scrollbar{width:5px;height:5px;}.ts::-webkit-scrollbar-track{background:var(--bg2);}.ts::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+.tin{position:relative;}
+.pht{position:absolute;top:0;bottom:0;width:1px;background:rgba(25,113,194,.2);pointer-events:none;z-index:15;display:none;}
+.rhc{height:var(--rh);background:var(--bg2);border-bottom:1px solid var(--border);}
+.th{height:var(--trk);display:flex;align-items:center;padding:0 8px 0 11px;border-bottom:1px solid var(--border);gap:5px;background:var(--bg3);}
+.thb{width:2px;height:14px;border-radius:1px;flex-shrink:0;}
+.thn{font-size:10px;font-weight:500;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.thr{font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--txt3);text-transform:uppercase;letter-spacing:.03em;}
+.shc{height:18px;display:flex;align-items:center;padding:0 8px;background:var(--bg4);border-bottom:1px solid var(--border);font-family:'JetBrains Mono',monospace;font-size:7.5px;color:var(--txt3);letter-spacing:.04em;text-transform:uppercase;}
+.tr{height:var(--trk);border-bottom:1px solid var(--border);position:relative;background:var(--bg3);}.tr.alt{background:var(--bg);}
+.sr{height:18px;background:var(--bg4);border-bottom:1px solid var(--border);position:relative;}
+.sc{position:absolute;top:0;bottom:0;width:1px;background:rgba(25,113,194,.18);}
+.clip{position:absolute;top:4px;height:calc(var(--trk) - 8px);border-radius:2px;cursor:pointer;overflow:hidden;display:flex;align-items:center;min-width:5px;transition:opacity .1s,box-shadow .1s;}
+.clip:hover{opacity:.8;box-shadow:0 0 0 1px var(--accent);}
+.cl{padding:0 5px;font-size:9px;font-weight:500;color:rgba(255,255,255,.92);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 2px rgba(0,0,0,.5);pointer-events:none;width:100%;}
+.xfi{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(to right,rgba(0,0,0,.4),transparent);pointer-events:none;}
+.xfo{position:absolute;right:0;top:0;bottom:0;background:linear-gradient(to left,rgba(0,0,0,.4),transparent);pointer-events:none;}
+.leg{display:flex;flex-wrap:wrap;border-top:1px solid var(--border);background:var(--bg3);padding:5px 14px;flex-shrink:0;}
+.li{display:flex;align-items:center;gap:4px;padding:3px 7px;font-size:10px;color:var(--txt2);}
+.ls{width:8px;height:8px;border-radius:2px;}
+.tip{position:fixed;background:#fff;border:1px solid var(--border2);padding:10px 12px;font-size:11px;line-height:1.9;color:var(--txt);pointer-events:none;z-index:999;display:none;min-width:200px;box-shadow:0 4px 16px rgba(0,0,0,.1);border-radius:4px;}
+.tk{color:var(--txt3);display:inline-block;min-width:78px;font-family:'JetBrains Mono',monospace;font-size:10px;}
+.btn{padding:5px 13px;font-size:11px;font-weight:500;border:1px solid var(--border2);background:#fff;color:var(--txt);cursor:pointer;border-radius:3px;transition:all .12s;}.btn:hover{border-color:var(--accent);color:var(--accent);}
+
+/* DOCS */
+.dox{max-width:860px;margin:0 auto;padding:48px 28px 80px;}
+.dh1{font-size:22px;font-weight:600;color:var(--txt);letter-spacing:-.02em;margin-bottom:6px;}
+.dsub{font-size:13px;color:var(--txt2);line-height:1.75;margin-bottom:20px;}
+.dsub code{font-family:'JetBrains Mono',monospace;font-size:11px;background:var(--code);padding:1px 5px;border-radius:2px;}
+.dtags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:28px;}
+.dtag{font-family:'JetBrains Mono',monospace;font-size:9px;padding:3px 9px;border:1px solid var(--border);color:var(--txt2);border-radius:2px;}
+.dtag.hi{border-color:var(--alt);color:var(--accent);background:var(--abg);}
+.sg{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:32px;}
+.sc2{border:1px solid var(--border);border-radius:4px;padding:16px;background:#fff;}
+.sc2t{font-size:10px;font-weight:600;color:var(--txt2);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border);font-family:'JetBrains Mono',monospace;letter-spacing:.06em;text-transform:uppercase;}
+.sc2i{font-size:12px;color:var(--txt2);padding:4px 0 4px 14px;border-bottom:1px solid var(--border);position:relative;line-height:1.5;}.sc2i:last-child{border:none;}
+.ib{border:1px solid #bfdbfe;border-radius:4px;background:var(--abg);padding:20px;margin-bottom:32px;}
+.ibt{font-size:10px;font-weight:600;color:var(--accent);font-family:'JetBrains Mono',monospace;letter-spacing:.06em;text-transform:uppercase;margin-bottom:12px;}
+.ibb{font-size:12px;color:#1e3a5f;line-height:1.8;}
+.ibb pre{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(37,99,235,.06);border:1px solid #bfdbfe;border-radius:3px;padding:10px;margin:8px 0;color:#1e3a5f;}
+.ibb strong{color:#1864ab;}
+.aig{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:32px;}
+.aic{border:1px solid var(--border);border-radius:4px;padding:14px;background:#fff;}
+.ait{font-size:9px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border);font-family:'JetBrains Mono',monospace;}
+.ait.can{color:var(--green);}.ait.cant{color:var(--red);}.ait.hard{color:var(--orange);}
+.aii{font-size:11px;color:var(--txt2);padding:4px 0 4px 12px;border-bottom:1px solid var(--border);position:relative;line-height:1.5;}.aii:last-child{border:none;}
+.aii::before{content:'';position:absolute;left:0;top:11px;width:4px;height:4px;border-radius:50%;}
+.ait.can~.aii::before{background:var(--green);}.ait.cant~.aii::before{background:var(--red);}.ait.hard~.aii::before{background:var(--orange);}
+.acc{margin-bottom:6px;border:1px solid var(--border);border-radius:4px;overflow:hidden;background:#fff;}
+.ach{padding:13px 16px;cursor:pointer;display:flex;align-items:center;gap:8px;user-select:none;transition:background .12s;}.ach:hover{background:var(--bg2);}
+.aar{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--txt3);transition:transform .18s;width:12px;flex-shrink:0;}
+.acc.op .aar{transform:rotate(90deg);}
+.att{font-size:13px;font-weight:500;color:var(--txt);}
+.asub{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--txt3);margin-left:auto;letter-spacing:.04em;}
+.ab2{display:none;border-top:1px solid var(--border);background:var(--bg);}
+.acc.op .ab2{display:block;}
+.ai{padding:16px 20px;font-size:12px;line-height:1.8;color:var(--txt2);}
+.ai h4{font-size:11px;font-weight:600;color:var(--txt);margin:16px 0 6px;font-family:'JetBrains Mono',monospace;letter-spacing:.04em;text-transform:uppercase;}.ai h4:first-child{margin-top:0;}
+.ai p{margin-bottom:8px;}.ai ul{padding-left:16px;margin-bottom:8px;}.ai li{margin-bottom:3px;}
+.ai code{font-family:'JetBrains Mono',monospace;font-size:10px;background:var(--code);padding:1px 5px;border-radius:2px;color:var(--accent);}
+.ai pre{font-family:'JetBrains Mono',monospace;font-size:10px;background:var(--code);border:1px solid var(--border);border-radius:3px;padding:12px;overflow-x:auto;line-height:1.6;color:var(--green);margin:8px 0;}
+.bdg{display:inline-block;font-size:9px;padding:1px 6px;border-radius:2px;margin-left:6px;font-family:'JetBrains Mono',monospace;}
+.bdg.f{background:var(--rbg);color:var(--red);}.bdg.ok{background:var(--gbg);color:var(--green);}.bdg.w{background:var(--obg);color:var(--orange);}
+.tbl{width:100%;border-collapse:collapse;font-size:11px;margin:8px 0;}
+.tbl th{background:var(--bg4);padding:6px 10px;text-align:left;font-weight:500;color:var(--txt);border:1px solid var(--border);font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.04em;}
+.tbl td{padding:6px 10px;border:1px solid var(--border);color:var(--txt2);vertical-align:top;}
+.cur{font-family:'JetBrains Mono',monospace;font-size:8px;padding:1px 5px;background:var(--abg);color:var(--accent);border:1px solid var(--alt);border-radius:2px;}
+.ac2{margin-top:8px;border:1px solid var(--border);border-radius:3px;overflow:hidden;}
+.ac2h{padding:9px 12px;cursor:pointer;display:flex;align-items:center;gap:6px;background:var(--bg2);transition:background .12s;}.ac2h:hover{background:var(--bg4);}
+.ac2r{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--txt3);transition:transform .15s;}
+.ac2.op .ac2r{transform:rotate(90deg);}
+.ac2t{font-size:11px;font-weight:500;color:var(--txt);}
+.ac2b{display:none;padding:12px 14px;border-top:1px solid var(--border);font-size:11px;color:var(--txt2);line-height:1.75;background:#fff;}.ac2.op .ac2b{display:block;}
+
+/* PROMPTS */
+.pw{max-width:900px;margin:0 auto;padding:40px 28px 80px;}
+.pt1{font-size:20px;font-weight:600;margin-bottom:6px;letter-spacing:-.02em;}
+.pt2{font-size:12px;color:var(--txt2);margin-bottom:24px;}
+.ptabs{display:flex;border-bottom:1px solid var(--border);}
+.ptab{padding:10px 16px;font-size:12px;font-weight:500;cursor:pointer;color:var(--txt2);border-bottom:2px solid transparent;transition:all .12s;}.ptab:hover{color:var(--txt);}.ptab.on{color:var(--accent);border-bottom-color:var(--accent);}
+.pc{display:none;background:var(--code);border:1px solid var(--border);border-top:none;border-radius:0 0 4px 4px;}.pc.on{display:block;}
+.pc pre{font-family:'JetBrains Mono',monospace;font-size:10px;padding:20px;overflow-x:auto;line-height:1.7;color:#166534;white-space:pre-wrap;word-break:break-word;}
+
+@media(max-width:768px){.dw{grid-template-columns:1fr;}.sb{border-right:none;border-bottom:1px solid var(--border);}.aig{grid-template-columns:1fr;}.sg{grid-template-columns:1fr;}}
+
+/* ── UNIFIED TIMELINE ── */
+.mn{display:flex;flex-direction:column;min-height:0;overflow:hidden;background:var(--bg);}
+.utbar{display:flex;align-items:center;background:var(--bg3);border-bottom:1px solid var(--border);padding:0 12px;height:32px;flex-shrink:0;gap:0;font-family:'JetBrains Mono',monospace;font-size:9.5px;}
+.utitem{color:var(--txt2);padding:0 10px;}
+.utitem span{font-weight:600;color:var(--txt);}
+.utdiv{width:1px;height:16px;background:var(--border);}
+.utsp{flex:1;}
+.uttc{font-size:12px;font-weight:600;color:var(--accent);font-variant-numeric:tabular-nums;padding:0 10px;}
+.utl{flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0;}
+.utempty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--txt3);font-size:12px;}
+.utbody{display:flex;flex:1;overflow:hidden;min-height:0;}
+.uth{width:160px;flex-shrink:0;background:var(--bg3);border-right:2px solid var(--border2);overflow:hidden;}
+.uth::-webkit-scrollbar{width:0;}
+.utc{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;}
+.utrw{height:24px;background:var(--bg2);border-bottom:1px solid var(--border);overflow:hidden;position:relative;cursor:pointer;flex-shrink:0;}
+.utrc{position:absolute;top:0;left:0;}
+.utph{position:absolute;top:0;bottom:0;width:1px;background:var(--accent);pointer-events:none;z-index:20;display:none;}
+.utph::before{content:'';position:absolute;top:0;left:-4px;border:4px solid transparent;border-top:7px solid var(--accent);}
+.utscroll{flex:1;overflow:auto;position:relative;}
+.utscroll::-webkit-scrollbar{width:5px;height:5px;}
+.utscroll::-webkit-scrollbar-track{background:var(--bg2);}
+.utscroll::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+.utinner{position:relative;}
+.utpht{position:absolute;top:0;bottom:0;width:1px;background:rgba(25,113,194,.2);pointer-events:none;z-index:15;display:none;}
+.utleg{display:flex;flex-wrap:wrap;align-items:center;border-top:1px solid var(--border);background:var(--bg3);padding:4px 10px;flex-shrink:0;}
+.utls{font-family:'JetBrains Mono',monospace;font-size:8px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--txt3);margin-right:4px;}
+.utleg .li{color:var(--txt2);font-family:'JetBrains Mono',monospace;font-size:8px;padding:2px 6px;}
+
+/* volume slider thumb */
+#vvol::-webkit-slider-thumb{-webkit-appearance:none;width:10px;height:10px;border-radius:50%;background:var(--accent);cursor:pointer;}
+#vvol::-moz-range-thumb{width:10px;height:10px;border-radius:50%;background:var(--accent);border:none;cursor:pointer;}
+.uthsbar{display:flex;height:13px;flex-shrink:0;background:var(--bg2);border-top:1px solid var(--border);}
+.uthsgutter{width:160px;flex-shrink:0;border-right:2px solid var(--border2);background:var(--bg2);}
+.uthsinner{flex:1;overflow-x:scroll;overflow-y:hidden;}
+.uthsinner::-webkit-scrollbar{height:13px;}
+.uthsinner::-webkit-scrollbar-track{background:var(--bg2);}
+.uthsinner::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+.uthsinner::-webkit-scrollbar-thumb:hover{background:#adb5bd;}
+.uthstrack{height:1px;}
+
+/* section separator */
+.secsep{height:22px;display:flex;align-items:center;padding:0 10px;background:var(--bg4);border-bottom:1px solid var(--border);border-top:1px solid var(--border);font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;position:relative;}
+.secsep-hdr{height:22px;display:flex;align-items:center;padding:0 8px;background:var(--bg4);border-bottom:1px solid var(--border);border-top:1px solid var(--border);font-family:'JetBrains Mono',monospace;font-size:8px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--txt3);}
+
+/* folder header */
+.fhdr{height:20px;display:flex;align-items:center;padding:0 7px;gap:6px;background:var(--bg2);border-bottom:1px solid var(--border);}
+.fhdr-bar{width:2px;height:12px;border-radius:1px;flex-shrink:0;}
+.frow{height:20px;background:var(--bg2);border-bottom:1px solid var(--border);position:relative;pointer-events:none;}
+.frow-lbl{position:absolute;left:9px;top:50%;transform:translateY(-50%);font-family:'JetBrains Mono',monospace;font-size:8px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;opacity:.3;color:var(--txt);}
+
+/* track/clip overrides for light bg */
+.uth .th{height:var(--trk);display:flex;align-items:center;padding:0 8px 0 11px;border-bottom:1px solid var(--border);gap:5px;background:var(--bg3);}
+.uth .th .thn{font-size:10px;font-weight:500;color:var(--txt);}
+.uth .th .thr{font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--txt3);text-transform:uppercase;letter-spacing:.03em;}
+.uth .thb{width:2px;height:14px;border-radius:1px;flex-shrink:0;}
+.uth .shc{height:18px;display:flex;align-items:center;padding:0 8px;background:var(--bg4);border-bottom:1px solid var(--border);font-family:'JetBrains Mono',monospace;font-size:7.5px;color:var(--txt3);letter-spacing:.04em;text-transform:uppercase;}
+.uth .rhc{height:24px;background:var(--bg2);border-bottom:1px solid var(--border);}
+
+.utinner .tr{height:var(--trk);border-bottom:1px solid var(--border);position:relative;background:var(--bg3);}
+.utinner .tr.alt{background:var(--bg);}
+.utinner .sr{height:18px;background:var(--bg4);border-bottom:1px solid var(--border);position:relative;}
+.utinner .clip .cl{color:rgba(255,255,255,.92);}
+.utinner .xfi{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(to right,rgba(0,0,0,.35),transparent);pointer-events:none;}
+.utinner .xfo{position:absolute;right:0;top:0;bottom:0;background:linear-gradient(to left,rgba(0,0,0,.35),transparent);pointer-events:none;}
+</style>
+</head>
+<body>
+<nav>
+  <div class="nl">AI Sound<em>.</em>Sync</div>
+  <a class="na on" onclick="S('demo',this)">Demo</a>
+  <a class="na" onclick="S('intro',this)">Introduction</a>
+  <a class="na" onclick="S('docs',this)">Documentation &amp; Logs</a>
+  <a class="na" onclick="S('prompts',this)">Prompts</a>
+  <div class="nsp"></div>
+  <div class="ntag" style="display:flex;gap:6px;">
+    <span style="padding:2px 8px;background:rgba(201,42,42,.1);color:#c92a2a;border:1px solid rgba(201,42,42,.25);border-radius:2px;font-family:'JetBrains Mono',monospace;font-size:9px;">Foley v2.303</span>
+    <span style="padding:2px 8px;background:rgba(25,113,194,.1);color:#1971c2;border:1px solid rgba(25,113,194,.25);border-radius:2px;font-family:'JetBrains Mono',monospace;font-size:9px;">Ambience v1.0</span>
+  </div>
+</nav>
+
+<!-- DEMO -->
+<section id="sec-demo" class="on">
+<div class="dw">
+  <div class="sb">
+    <div class="ss">
+      <div class="sl">Video Input</div>
+      <div id="vdW"><div class="vd" id="vdrop" onclick="document.getElementById('vfi').click()" ondragover="dov(event)" ondragleave="dlv(event)" ondrop="ddp(event)"><div class="vi">▶</div>Drop video here<span style="font-size:9px;opacity:.5">mp4 · mov · webm</span></div><input type="file" id="vfi" accept="video/*" style="display:none" onchange="loadV(this)"></div>
+      <div id="vtW" style="display:none">
+        <div class="vthumb"><video id="dv" preload="metadata" playsinline></video></div>
+        <div class="vn" id="vname">—</div>
+        <div style="display:flex;align-items:center;gap:5px;margin-top:6px;">
+          <button class="btn" id="vpbtn" style="font-size:11px;padding:4px 10px;min-width:36px;" onclick="toggleVid()">▶</button>
+          <button class="btn" style="font-size:10px;padding:4px 8px;" onclick="seekVid(-5)">«</button>
+          <button class="btn" style="font-size:10px;padding:4px 8px;" onclick="seekVid(5)">»</button>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent);flex:1;text-align:center;" id="vct2">00:00:00</span>
+          <div style="display:flex;align-items:center;gap:3px;flex-shrink:0;">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--txt3);">V</span>
+            <input type="range" min="0" max="1" step="0.05" value="1" style="width:44px;height:3px;-webkit-appearance:none;appearance:none;background:var(--border2);border-radius:2px;outline:none;cursor:pointer;" oninput="document.getElementById('dv').volume=this.value" id="vvol">
+          </div>
+          <button class="btn" style="font-size:10px;padding:4px 8px;" onclick="ejectV()">✕</button>
+        </div>
+      </div>
+    </div>
+    <div class="ss">
+      <button class="ab" id="abtn" onclick="runA()" disabled>Analyze — Ambience + Foley</button>
+      <div class="pg" id="pg"><div class="ps" id="p1">프레임 추출 중</div><div class="ps" id="p2">Ambience 분석 중</div><div class="ps" id="p3">Foley 분석 중</div><div class="ps" id="p4">타임라인 렌더링</div><div class="pbw"><div class="pb" id="pb"></div></div></div>
+    </div>
+    <div class="ss">
+      <div class="sl">Or Paste JSON</div>
+      <textarea class="jp" id="jpaste" placeholder='{"layers":[...]} or {"events":[...]}'></textarea>
+      <div class="r2"><button class="btn" style="flex:1" onclick="rPaste('ambience')">Ambience</button><button class="btn" style="flex:1" onclick="rPaste('foley')">Foley</button></div>
+    </div>
+    <div class="ss" id="dlSection" style="display:none;">
+      <div class="sl">분석 결과 JSON 다운로드</div>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-top:2px;">
+        <button class="btn" id="dlF" style="display:none;width:100%;padding:7px;font-size:11px;font-weight:600;border-color:#c92a2a;color:#c92a2a;text-align:left;" onclick="dlJSON('foley')">↓ Foley Analysis JSON</button>
+        <button class="btn" id="dlA" style="display:none;width:100%;padding:7px;font-size:11px;font-weight:600;border-color:#1971c2;color:#1971c2;text-align:left;" onclick="dlJSON('ambience')">↓ Ambience Analysis JSON</button>
+      </div>
+    </div>
+  </div>
+  <div class="mn">
+    <!-- STATUS BAR -->
+    <div class="utbar" id="utbar" style="display:none">
+      <div class="utitem">Foley <span id="uFS" style="color:#c92a2a">0</span> FS · <span id="uCL" style="color:#6741d9">0</span> CL · <span id="uHD" style="color:#1098ad">0</span> HD</div>
+      <div class="utdiv"></div>
+      <div class="utitem">Ambience <span id="uLY" style="color:#1971c2">0</span> layers · <span id="uSC" style="color:#2f9e44">0</span> scenes</div>
+      <div class="utsp"></div>
+      <div class="uttc" id="uttc">00:00:00</div>
+
+    </div>
+    <!-- UNIFIED TIMELINE -->
+    <div class="utl" id="utl">
+      <div class="utempty" id="utempty">
+        <div style="font-size:28px;opacity:.1">〰</div>
+        영상을 업로드하고 Analyze를 실행하거나 JSON을 붙여넣으세요
+      </div>
+      <div class="utbody" id="utbody" style="display:none">
+        <div class="uth" id="uth"></div>
+        <div class="utc">
+          <div class="utrw" id="utrw"><canvas id="utrc" height="24" class="rc"></canvas><div class="utph" id="utph"></div></div>
+          <div class="utscroll" id="utscroll"><div class="utinner" id="utinner"></div><div class="utpht" id="utpht"></div></div>
+          <div class="uthsbar" id="uthsbar"><div class="uthsgutter"></div><div class="uthsinner" id="uthsinner"><div class="uthstrack" id="uthstrack"></div></div></div>
+        </div>
+      </div>
+      <!-- LEGEND -->
+      <div class="utleg" id="utleg" style="display:none">
+        <span class="utls">FOLEY:</span>
+        <div class="li"><div class="ls" style="background:#c92a2a"></div>Footstep</div>
+        <div class="li"><div class="ls" style="background:#6741d9"></div>Cloth</div>
+        <div class="li"><div class="ls" style="background:#1098ad"></div>Hand</div>
+        <span class="utls" style="margin-left:12px;">AMBIENCE:</span>
+        <div class="li"><div class="ls" style="background:#1971c2"></div>Room Tone</div>
+        <div class="li"><div class="ls" style="background:#2f9e44"></div>Environment</div>
+        <div class="li"><div class="ls" style="background:#5c940d"></div>Nature</div>
+        <div class="li"><div class="ls" style="background:#e67700"></div>Crowd</div>
+        <div class="li"><div class="ls" style="background:#1098ad"></div>Weather</div>
+        <div class="li"><div class="ls" style="background:#6741d9"></div>Mechanical</div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- INTRO -->
+<section id="sec-intro">
+<div class="dox">
+  <div class="dh1">AI 기반 영상-사운드 자동 싱크 파이프라인</div>
+  <div class="dsub">개인 R&amp;D 프로젝트 (2025.12 ~ 현재) · <code>Claude API</code> · <code>ffmpeg</code> · <code>MediaPipe</code> · <code>OpenCV</code> · <code>Python</code></div>
+  <div class="dtags"><span class="dtag hi">Claude API</span><span class="dtag hi">Anthropic</span><span class="dtag">Prompt Engineering v2.303</span><span class="dtag">ffmpeg Pipeline</span><span class="dtag">OpenCV 3-Signal</span><span class="dtag">MediaPipe</span><span class="dtag">AI Native Dev</span></div>
+
+
+  <!-- 프로젝트 목표 -->
+<!-- 프로젝트 목표 -->
+  <div class="sc2" style="margin-bottom:28px;">
+    <div class="sc2t">프로젝트 목표</div>
+    <div class="sc2i" style="padding:14px 16px;line-height:1.85;border:none;">
+      <p style="font-size:13px;color:var(--txt);margin-bottom:10px;">현재 AI 기반 효과음 생성 기술은 영상·미디어와의 높은 종속성을 충분히 반영하지 못해 실무 활용에 한계가 있다. 효과음은 단독 품질이 아닌 <strong>싱크로나이징, 믹싱, 맥락 적합성</strong>이 동시에 충족되어야 하며, 이는 생성 중심 AI 구조만으로는 해결할 수 없다.</p>
+      <p style="font-size:13px;color:var(--txt);margin-bottom:10px;">본 프로젝트는 AI 기반 생성 중심 구조에서 벗어나, <strong>영상 분석 기반 자동 사운드 배치 시스템</strong>을 통해 실무 환경에 적합한 효과음 워크플로우를 구현하는 것을 목표로 한다. 사운드 에셋 수급은 이미 시장에 검증된 라이브러리를 활용하고, AI는 싱크로나이징과 배치 자동화를 담당하는 <strong>분석·매칭·배치 중심 구조</strong>를 지향한다.</p>
+      <p style="font-size:13px;color:var(--txt2);margin-bottom:20px;">1차 목표는 에디팅 단계의 자동화다 — 적절한 사운드 에셋 판별, 영상 싱크로나이징, 기초 편집. 오디오 믹스 단계는 사운드 에디팅이 완료된, 즉 미디어의 모든 요소가 커버된 이후에 우선순위와 연출을 고도화하는 작업이다. 따라서 믹싱은 에디팅이 일정 수준에 도달한 후 접근해야 할 영역이며, 이 구조는 실제 정규 사운드 디자인 워크플로우와 동일하다.</p>
+
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:4px;">
+        <div style="border:1px solid var(--accent-lt);background:var(--abg);border-radius:4px;padding:14px;">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:8px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:6px;display:flex;align-items:center;gap:6px;">
+            <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent);"></span>1차 목표 <span style="font-size:8px;padding:1px 5px;background:rgba(25,113,194,.12);border-radius:2px;color:var(--accent);">진행 중</span>
+          </div>
+          <div style="font-size:12px;font-weight:600;color:var(--txt);margin-bottom:6px;">AI 분석 능력 검증 및 고도화</div>
+          <div style="font-size:11px;color:var(--txt2);line-height:1.65;">Claude API를 활용한 영상 분석 — 씬 구조, 이벤트 타이밍, 사운드 카테고리 자동 추출 능력의 실무 적용 가능성 검증 및 프롬프트 고도화</div>
+        </div>
+        <div style="border:1px solid var(--border);background:var(--bg3);border-radius:4px;padding:14px;opacity:.7;">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:8px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--txt3);margin-bottom:6px;display:flex;align-items:center;gap:6px;">
+            <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--border2);"></span>2차 목표 <span style="font-size:8px;padding:1px 5px;background:var(--bg2);border-radius:2px;color:var(--txt3);">예정</span>
+          </div>
+          <div style="font-size:12px;font-weight:600;color:var(--txt);margin-bottom:6px;">사운드 에셋 라이브러리 구성</div>
+          <div style="font-size:11px;color:var(--txt2);line-height:1.65;">분석 결과(카테고리 / 재질 / 무게 / 동작)와 매칭되는 사운드 에셋 메타데이터 구조 설계 및 라이브러리 구성</div>
+        </div>
+        <div style="border:1px solid var(--border);background:var(--bg3);border-radius:4px;padding:14px;opacity:.7;">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:8px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--txt3);margin-bottom:6px;display:flex;align-items:center;gap:6px;">
+            <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--border2);"></span>3차 목표 <span style="font-size:8px;padding:1px 5px;background:var(--bg2);border-radius:2px;color:var(--txt3);">예정</span>
+          </div>
+          <div style="font-size:12px;font-weight:600;color:var(--txt);margin-bottom:6px;">자동 배치 및 플랫폼 제공</div>
+          <div style="font-size:11px;color:var(--txt2);line-height:1.65;">분석 결과 기반 사운드 에셋 자동 배치 구현 및 미디어 편집 워크플로우에 직접 통합 가능한 플러그인 형태 제공</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 사용 방법 -->
+<!-- USAGE FLOWCHART -->
+  <div style="border:1px solid var(--border);border-radius:4px;background:var(--bg3);padding:16px 20px;margin-bottom:28px;">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--txt3);margin-bottom:14px;">사용 방법 — Demo 탭 기준</div>
+    <div style="display:flex;align-items:stretch;gap:0;overflow-x:auto;padding-bottom:4px;">
+      <div style="flex:1;min-width:110px;border:1px solid #bfdbfe;background:#eff6ff;border-radius:4px;padding:10px 12px;text-align:center;">
+        <div style="font-size:10px;font-weight:600;color:#c92a2a;font-family:'JetBrains Mono',monospace;letter-spacing:.04em;text-transform:uppercase;margin-bottom:5px;">① User</div>
+        <div style="font-size:11px;font-weight:600;color:#1e3a5f;margin-bottom:4px;">영상 업로드</div>
+        <div style="font-size:10px;color:#4a7ab5;">mp4 · mov · webm</div>
+      </div>
+      <div style="display:flex;align-items:center;padding:0 6px;color:var(--accent);font-size:14px;">→</div>
+      <div style="flex:1;min-width:110px;border:1px solid var(--border);background:var(--bg2);border-radius:4px;padding:10px 12px;text-align:center;">
+        <div style="font-size:10px;font-weight:600;color:var(--txt3);font-family:'JetBrains Mono',monospace;letter-spacing:.04em;text-transform:uppercase;margin-bottom:5px;">② System</div>
+        <div style="font-size:11px;font-weight:600;color:var(--txt);margin-bottom:4px;">프레임 추출</div>
+        <div style="font-size:10px;color:var(--txt2);">4fps · 최대 60장</div>
+      </div>
+      <div style="display:flex;align-items:center;padding:0 6px;color:var(--accent);font-size:14px;">→</div>
+      <div style="flex:1;min-width:130px;border:1px solid var(--accent-lt);background:var(--abg);border-radius:4px;padding:10px 12px;text-align:center;">
+        <div style="font-size:10px;font-weight:600;color:var(--accent);font-family:'JetBrains Mono',monospace;letter-spacing:.04em;text-transform:uppercase;margin-bottom:5px;">③ Claude API</div>
+        <div style="font-size:11px;font-weight:600;color:var(--txt);margin-bottom:4px;">프롬프트 분석</div>
+        <div style="font-size:10px;color:var(--txt2);">Foley v2.303 · Ambience v1.0</div>
+      </div>
+      <div style="display:flex;align-items:center;padding:0 6px;color:var(--accent);font-size:14px;">→</div>
+      <div style="flex:1;min-width:110px;border:1px solid var(--border);background:var(--bg2);border-radius:4px;padding:10px 12px;text-align:center;">
+        <div style="font-size:10px;font-weight:600;color:var(--txt3);font-family:'JetBrains Mono',monospace;letter-spacing:.04em;text-transform:uppercase;margin-bottom:5px;">④ System</div>
+        <div style="font-size:11px;font-weight:600;color:var(--txt);margin-bottom:4px;">JSON 출력</div>
+        <div style="font-size:10px;color:var(--txt2);">이벤트 타임코드</div>
+      </div>
+      <div style="display:flex;align-items:center;padding:0 6px;color:var(--accent);font-size:14px;">→</div>
+      <div style="flex:1;min-width:110px;border:1px solid var(--border);background:var(--bg2);border-radius:4px;padding:10px 12px;text-align:center;">
+        <div style="font-size:10px;font-weight:600;color:var(--txt3);font-family:'JetBrains Mono',monospace;letter-spacing:.04em;text-transform:uppercase;margin-bottom:5px;">⑤ System</div>
+        <div style="font-size:11px;font-weight:600;color:var(--txt);margin-bottom:4px;">타임라인 배치</div>
+        <div style="font-size:10px;color:var(--txt2);">DAW 형식 뷰어</div>
+      </div>
+    </div>
+    <div style="margin-top:10px;font-size:11px;color:var(--txt2);line-height:1.7;padding:8px 10px;background:var(--bg2);border-radius:3px;border-left:3px solid var(--accent);">
+      분석은 <strong>Foley + Ambience 동시 병렬 실행</strong>됩니다. 결과 JSON은 상단 버튼으로 다운로드하거나, Paste JSON 칸에 직접 붙여넣어 타임라인을 재현할 수 있습니다.
+    </div>
+  </div>
+
+
+  <!-- 현재 구현 범위 -->
+<!-- READ ME -->
+  <div style="border:1px solid #bfdbfe;border-radius:4px;background:#eff6ff;padding:16px 20px;margin-bottom:28px;">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#1971c2;margin-bottom:10px;display:flex;align-items:center;gap:8px;">
+      <span style="padding:2px 8px;background:rgba(25,113,194,.12);border-radius:2px;">현재 구현 범위 및 상태</span>
+    </div>
+    <p style="font-size:12px;color:#1e3a5f;line-height:1.8;margin-bottom:8px;">본 프로젝트는 현재 <strong>진행 중인 R&amp;D 단계</strong>로, 프로덕션 수준의 완성도를 보장하지 않습니다.</p>
+    <p style="font-size:12px;color:#1e3a5f;line-height:1.8;margin-bottom:8px;">현재 구현 범위: <strong>영상 입력 → Claude API 기반 씬·캐릭터·재질 분석 → 이벤트 타임라인 JSON 출력 → 타임라인 뷰어 배치</strong>까지의 파이프라인이 구현되어 있습니다. 단, 실제 오디오 에셋 적용 단계는 포함되지 않으며, Foley 및 Ambience 타임라인 데이터는 분석 정확도 고도화 작업이 진행 중입니다.</p>
+    <div style="display:flex;gap:16px;margin-top:10px;flex-wrap:wrap;">
+      <div style="font-size:11px;color:#1971c2;display:flex;align-items:center;gap:5px;"><span style="width:8px;height:8px;border-radius:50%;background:#2f9e44;display:inline-block;"></span>구현 완료 — 영상 분석·타임라인 배치 파이프라인</div>
+      <div style="font-size:11px;color:#1971c2;display:flex;align-items:center;gap:5px;"><span style="width:8px;height:8px;border-radius:50%;background:#e67700;display:inline-block;"></span>고도화 진행 중 — Foley Footstep 타이밍 정밀도</div>
+      <div style="font-size:11px;color:#1971c2;display:flex;align-items:center;gap:5px;"><span style="width:8px;height:8px;border-radius:50%;background:#adb5bd;display:inline-block;"></span>미구현 — 사운드 에셋 매칭·배치</div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- DOCS -->
+<section id="sec-docs">
+<div class="dox">
+  <!-- 핵심 인사이트 -->
+  <div class="ib">
+    <div class="ibt">핵심 인사이트</div>
+    <div style="font-size:11px;color:#4a7ab5;font-family:'JetBrains Mono',monospace;letter-spacing:.04em;margin-bottom:12px;">AI와 인간의 미디어 분석 방식 차이에서 도출한 실무적 방향</div>
+    <div class="ibb">
+      <p>이 프로젝트를 통해 확인한 가장 실질적인 발견은, <strong>AI가 무엇을 잘하는지가 아니라 어떤 구조의 문제를 잘 푸는지</strong>, 그리고 AI가 미디어를 인간과 전혀 다른 방식으로 분석한다는 사실 자체에서 오는 가능성과 한계에 관한 것이다. AI는 인간이 당연하게 여기는 맥락을 놓치는 반면, 인간이 직관적으로 처리하는 시각 정보를 비구조적으로 분해해서 인간보다 정확하게 분류하는 영역도 존재한다. 어느 쪽이 더 우월하다는 게 아니라, 이 차이를 명확히 이해하는 것 자체가 AI를 실무에 통합하는 데 있어 핵심적인 출발점이었다.</p>
+      <p style="margin-top:10px;">Claude API는 씬 안에서 일어나는 것들 — 공간의 성격, 재질, 캐릭터 식별, 명확한 물리적 동작 — 을 이미지 기반으로 매우 정확하게 분류해낸다. HAND, CLOTH, Ambience처럼 <strong>"무엇이 존재하는가(existence)"를 판단하는 문제</strong>에서는 실무 적용 가능한 수준의 결과를 일관되게 냈다.</p>
+      <p style="margin-top:10px;">반면 Footstep 싱크는 다른 구조의 문제였다. 발이 지면에 닿는 순간은 "무언가가 있는가"가 아니라 <strong>"움직임이 언제 멈추는가(motion termination)"</strong>의 문제다. 이것은 프레임 간 연속적인 수치 비교를 요구하는데, 현재 LLM 비전 구조는 이미지를 개별적으로 처리하기 때문에 이 판단을 구조적으로 수행하기 어렵다. 7가지 접근(픽셀 차분, Pose Estimation, 프롬프트 고도화, ffmpeg 파이프라인, OpenCV 3신호 추적 등)을 시도했으나 모두 같은 벽에 부딪혔다.</p>
+      <p style="margin-top:10px;"><strong>결론적으로:</strong> AI가 잘 풀 수 있는 문제와 현재 구조에서 한계가 있는 문제를 명확히 구분하고, 잘 풀 수 있는 영역부터 완성도를 높이는 것이 현실적인 방향이다. Ambience와 SFX-Hard EFX는 전자에 해당하고, Footstep 정밀 싱크는 현재 개인 단위 프로젝트의 범위를 넘어서는 문제일 수 있다.</p>
+    </div>
+  </div>
+
+  <!-- 검증 결과 카드 -->
+  <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--txt3);margin-bottom:10px;">검증 결과 요약</div>
+  <div class="aig">
+    <div class="aic">
+      <div class="ait can">실무 적용 가능한 영역</div>
+      <div class="aii">씬 분류 및 컷 경계 감지</div>
+      <div class="aii">공간 크기·음향 특성 파악</div>
+      <div class="aii">재질·표면·소재 식별</div>
+      <div class="aii">캐릭터 식별 및 복수 추적</div>
+      <div class="aii">HAND — 명확한 접촉 이벤트</div>
+      <div class="aii">CLOTH — 물리적 반응 구간</div>
+      <div class="aii">Ambience 레이어 구조 설계</div>
+    </div>
+    <div class="aic">
+      <div class="ait cant">현재 구조적 한계</div>
+      <div class="aii">발 접지 순간 프레임 정밀 감지</div>
+      <div class="aii">프레임 간 연속 수치 비교</div>
+      <div class="aii">카메라 무빙 환경 ROI 추적</div>
+      <div class="aii">Motion termination moment</div>
+      <div class="aii">오프스크린 Footstep 타이밍</div>
+    </div>
+    <div class="aic">
+      <div class="ait hard">개인 프로젝트 단위 한계</div>
+      <div class="aii">Partial Body Footstep ±1프레임</div>
+      <div class="aii">카메라 드리프트 신호 분리</div>
+      <div class="aii">씬 초반 정적/동적 자동 판단</div>
+      <div class="aii">실무 수준 Foley 완전 자동화</div>
+    </div>
+  </div>
+
+  <!-- 1. 문제 정의 -->
+  <div class="acc" style="margin-top:24px;">
+    <div class="ach" onclick="tog(this)"><span class="aar">▶</span><span class="att">1. 문제 정의</span><span class="asub">Problem Definition</span></div>
+    <div class="ab2"><div class="ai">
+
+      <h4>a. 미디어 종속성</h4>
+      <p>오디오는 영화, 게임, 광고 등 시각 기반 미디어에 대한 의존성이 매우 높은 매체이다. 음악을 제외하면, 미디어와 분리된 상태로 독립적인 상품성을 갖는 오디오는 매우 제한적이다.</p>
+      <p>특히 효과음은 미디어 의존성이 가장 높은 영역으로, 단독으로는 완성된 상품이 되기 어렵다. 사운드 믹싱 과정에서는 일반적으로 다이얼로그, 음악, 효과음, 폴리, 앰비언스 순으로 가시성을 조절하며, 하위 요소로 갈수록 '티 나지 않게' 배치되는 경우가 많다. 즉, 개별 효과음의 화려함보다 자연스럽고 이질감 없는 연출이 우선적으로 요구된다. 아무리 완성도가 높은 효과음이라 하더라도, 영상 맥락과 어긋날 경우 이는 명백한 오류로 인식된다.</p>
+      <p>따라서 효과음 설계의 핵심은 미디어에 자연스럽게 융합되는 것이다. 이를 위해서는 다음과 같은 최소 기준이 충족되어야 한다.</p>
+      <div style="margin:10px 0 4px;font-size:11px;font-weight:600;color:var(--txt);font-family:'JetBrains Mono',monospace;letter-spacing:.04em;text-transform:uppercase;">1. 싱크로나이징 (Sound Edit)</div>
+      <ul><li>영상 기준 프레임 단위 동기화</li><li>이벤트 및 시퀀스에 대한 정확한 반응</li><li>인터랙티브 콘텐츠 환경 대응</li></ul>
+      <div style="margin:10px 0 4px;font-size:11px;font-weight:600;color:var(--txt);font-family:'JetBrains Mono',monospace;letter-spacing:.04em;text-transform:uppercase;">2. 믹스 및 마스터링 (Sound Mix)</div>
+      <ul><li>다이얼로그, 음악, 효과음, 폴리, 앰비언스 간 볼륨 밸런스 유지</li><li>통합 dB LUFS, dBTP 기준 충족</li><li>SFX 개별 볼륨 관리 및 헤드룸 확보</li><li>대사 및 음악과의 가시성 조절</li></ul>
+      <div style="margin:10px 0 4px;font-size:11px;font-weight:600;color:var(--txt);font-family:'JetBrains Mono',monospace;letter-spacing:.04em;text-transform:uppercase;">3. 음질 관리 (Edit)</div>
+      <ul><li>클리핑, 클릭, 크랙클, 배경 노이즈 제거</li><li>깨끗한 파형 유지</li></ul>
+      <div style="margin:10px 0 4px;font-size:11px;font-weight:600;color:var(--txt);font-family:'JetBrains Mono',monospace;letter-spacing:.04em;text-transform:uppercase;">4. 에디팅 완성도 (Edit)</div>
+      <ul><li>질감과 무게감의 적절한 표현</li><li>장면 맥락에 맞는 다이나믹 구성</li></ul>
+
+      <h4>b. AI 효과음 생성 기술의 한계</h4>
+      <p>AI 기반 효과음 생성 기술은 음질 관리 및 에디팅 완성도 측면에서 일정 부분 기여할 수 있다. 이는 오디오 파일 자체의 품질만으로 평가 가능한 영역에 해당한다. 그러나 해당 방식에는 다음과 같은 구조적 한계가 존재한다.</p>
+
+      <div style="margin:10px 0 4px;font-size:11px;font-weight:600;color:var(--txt);">비용 구조의 한계</div>
+      <p>고품질 효과음 에셋은 이미 시장에 충분히 축적되어 있으며, 이를 구매·활용하는 방식이 비용 측면에서 효율적인 경우가 많다. 반면, 생성형 AI 방식은 호출당 GPU 연산 자원을 지속적으로 소모하므로 장기적으로 운영 비용 부담이 증가한다.</p>
+
+      <div style="margin:10px 0 4px;font-size:11px;font-weight:600;color:var(--txt);">품질 통제의 한계</div>
+      <p>현행 생성형 효과음 모델은 음질 관리 및 정밀한 에디팅 완성도를 안정적으로 확보하기 어렵다. 생성 과정에서 발생하는 클리핑(Clipping) 및 질감의 불균형 등은 필연적으로 수동 후반 보정 공정을 동반하며, 이는 결과적으로 '자동화'를 통한 생산성 향상이라는 본질적 이점을 상쇄시킨다.</p>
+      <p>또한, 생성형 모델의 특성상 동일한 입력값에 대해 일관된 레이어 구조나 위상(Phase)을 보장할 수 없다는 비결정론적 변칙성은, 정교한 믹싱과 사운드 레이어링이 필수적인 전문가용 파이프라인에 통합하기 어려운 제약 요인으로 작용한다.</p>
+      <p><strong>미래 전략적 관점:</strong> 단, 이러한 품질 통제의 한계는 멀지 않은 미래에 기술적으로 해결될 영역임을 전제해야 한다. 기술의 성숙도가 상향 평준화되는 시점에는 '누가 더 잘 만드는가'보다 '누가 더 정확한 맥락(Context)에 배치하는가'의 싸움이 될 것이다. 따라서 현행 모델의 불완전성을 인지하는 동시에, 생성 결과물의 변칙성을 제어하고 영상 맥락에 즉각 대응할 수 있는 분석·배치 중심의 워크플로우를 선제적으로 구축하여 기술적 선점 효과를 극대화하고자 한다.</p>
+
+      <div style="margin:10px 0 4px;font-size:11px;font-weight:600;color:var(--txt);">활용성 및 편의성의 한계</div>
+      <p>현재 시장에는 이미 다양한 고품질 사운드 디자인 에셋이 존재한다. 이러한 환경에서 생성형 AI가 경쟁력을 확보하기 위해서는 단순 생성이 아닌 입력 반응성 및 작업 효율 향상에서 우위를 확보해야 한다. 그러나 실제로는 다음과 같은 문제가 발생한다.</p>
+      <ul>
+        <li>전문가 사용자는 이미 고유의 워크플로우와 노하우를 구축하고 있어 생성 기반 도구의 활용도가 낮다.</li>
+        <li>비전문 사용자는 자연어 기반 사운드 지시 능력이 제한적이어서 원하는 결과를 안정적으로 도출하기 어렵다.</li>
+        <li>결과적으로 입력 대비 출력의 일관성과 신뢰도가 낮아 실무 환경에서 반복 활용이 어렵다.</li>
+      </ul>
+
+      <div style="margin:10px 0 4px;font-size:11px;font-weight:600;color:var(--txt);">비즈니스 구조의 한계 — 생산·결정·책임 3단계</div>
+      <p>콘텐츠 기반 서비스는 일반적으로 '생산–결정–책임'의 3단계 구조를 따른다. AI 기반 효과음 생성 서비스 또한 동일한 구조 내에서 평가할 수 있다.</p>
+      <ul>
+        <li><strong>생산 단계 (AI 효과음 생성):</strong> AI를 통해 효과음을 생성하며, 이는 사운드 제작 과정 중 가장 초기 단계인 '에셋 확보'에 해당한다. 생성 기술은 사운드 디자인의 전체 과정이 아닌, 재료 수급 단계에 국한된 기능을 수행한다. 현행 생성 기술은 클리핑, 노이즈, 질감 불균형, 다이내믹 제어 미흡 등 세부 품질 관리 요소에서 한계가 존재하며, 생성된 에셋은 여전히 싱크 조정, 레벨 보정, 레이어 구성 등 후속 작업을 요구한다.</li>
+        <li><strong>결정 단계 (AI 효과음 구매 및 활용 판단):</strong> 전문가 집단(결정 역량 보유)은 기존 워크플로우 대비 품질·효율·비용 측면의 우위를 확인하지 못할 경우 AI 생성물을 활용할 유인이 낮아진다. 비전문가 집단(결정 역량 미보유)은 생성물의 품질을 객관적으로 판단하기 어려워 활용 여부를 합리적으로 결정하지 못한다. 결과적으로 두 집단 모두 적극적 채택 동기가 제한된다.</li>
+        <li><strong>책임 단계 (결과물 품질에 대한 책임):</strong> 전문가 집단은 AI 생성물 활용으로 인한 품질 리스크를 회피하기 위해 활용 자체를 제한한다. 비전문가 집단은 활용 이후 결과물에 대한 책임을 스스로 부담하거나, 실패 경험 이후 도구 사용을 중단하는 경향을 보인다. 이로 인해 서비스에 대한 신뢰도 및 지속 활용성이 저하된다.</li>
+      </ul>
+    </div></div>
+  </div>
+
+  <!-- 2. 시스템 설계 및 해결방안 -->
+  <div class="acc">
+    <div class="ach" onclick="tog(this)"><span class="aar">▶</span><span class="att">2. 시스템 설계 및 해결방안</span><span class="asub">System Design</span></div>
+    <div class="ab2"><div class="ai">
+
+      <h4>a. 개요</h4>
+      <p>현재 시장에는 이미 다양한 고품질 사운드 에셋이 축적되어 있으며, Krotos Studio와 같은 전문 툴은 프리셋과 알고리즘 기반 구조를 통해 높은 완성도의 사운드 디자인 에셋을 제공하고 있다. 이러한 도구들은 AI 기반 생성 기술이 목표로 하는 기능을 이미 안정적인 품질로 구현하고 있으나, 일정 수준의 전문성과 학습 비용이 요구된다는 진입장벽이 존재한다.</p>
+      <p>본 프로젝트는 다음 구조를 지향한다:</p>
+      <ul>
+        <li><strong>재료 수급 &amp; 사운드 에디팅 단계:</strong> AI 의존도를 최소화하고, 검증된 사운드 에셋과 프리셋 기반 구조를 중심으로 설계한다. 생성 품질의 불확실성을 제거하고 안정적인 결과물을 확보한다.</li>
+        <li><strong>싱크로나이징 단계:</strong> Claude API를 활용해 씬, 이벤트, 타이밍 정보를 자동 추출하고, 이를 기반으로 사운드 매칭 및 배치를 수행한다.</li>
+        <li><strong>플랫폼 제공:</strong> 웹 기반 SaaS가 아닌 미디어 편집 워크플로우에 직접 통합되는 범용 플러그인 형태로 설계하여, 사용자가 실무 환경 내에서 즉시 활용할 수 있도록 한다.</li>
+      </ul>
+      <p>이를 통해 <strong>'생성 중심 구조'가 아닌 '분석·매칭·배치 중심 구조'</strong>를 기반으로 한 실무 친화형 자동화 플랫폼을 구현한다.</p>
+
+      <h4>b. 시스템 구조도</h4>
+      <p>HTML 구동 테스트 환경의 전체 흐름은 다음과 같다:</p>
+      <pre>Video Input → Video Analysis (Claude API) → Event Timeline (JSON)
+                                            → Asset Match (JSON)
+                                            → Auto Placement</pre>
+      <ul>
+        <li><strong>1. 영상 입력:</strong> 사용자가 영상 파일을 업로드한다.</li>
+        <li><strong>2. 영상 분석:</strong> Claude API + Prompt를 통해 영상을 분석한다.</li>
+        <li><strong>3. Event Timeline:</strong> JSON 형태로 타임라인 정보를 출력한다.</li>
+        <li><strong>4. Asset Match:</strong> JSON 형태로 사운드 이벤트 정보를 매칭한다.</li>
+        <li><strong>5. Auto Placement:</strong> 전달된 정보를 기반으로 사운드 에셋을 배치한다.</li>
+      </ul>
+
+      <h4>c. 핵심 기술 — 영상 분석</h4>
+      <p>영상 분석의 목적은 "씬 커버(Scene Coverage)" 관점에서 필요한 사운드 요소를 식별하고, 이를 배치 가능한 이벤트 타임라인으로 정규화하는 것이다. 분석 결과는 JSON으로 출력하며 각 이벤트는 다음을 포함한다:</p>
+      <ul>
+        <li><strong>타임라인 정보:</strong> ms 단위 타임코드, fps 및 프레임 단위 정보 병기 가능</li>
+        <li><strong>사운드 카테고리:</strong> SFX / Foley / Ambience</li>
+        <li><strong>사운드 재질 (Material):</strong> 메탈, 돌, 풀, 유리 등</li>
+        <li><strong>사운드 무게 (Weight):</strong> light / medium / heavy</li>
+        <li><strong>사운드 동작 (Action):</strong> idle, move, hit, swing 등</li>
+      </ul>
+      <p>영상 분석 룰은 에셋 라이브러리와의 매칭 정확도를 극대화하는 방향으로 설계하며, 추가 규칙을 포함한다:</p>
+      <ul>
+        <li>카테고리별 디폴트 레벨(dBFS) 제안값 출력</li>
+        <li>동시 이벤트 발생 시 카테고리 기반 사이드체인(ducking) 규칙 적용</li>
+      </ul>
+
+      <h4>d. 핵심 기술 — 에셋 구성</h4>
+      <p>에셋 라이브러리는 카테고리 / 재질 / 무게 / 동작 기준으로 설계한다. 에셋 메타데이터는 다음 기준을 포함한다:</p>
+      <ul>
+        <li><strong>카테고리 (기본):</strong> SFX / Foley / Ambience</li>
+        <li><strong>카테고리 (상세, SFX):</strong>
+          <ul style="margin-top:4px;">
+            <li>Hard EFX — 씬 내 직접적 효과음 (충돌, 폭발, 타격 등)</li>
+            <li>SPFX — 씬 외/전환/연출 중심 효과음 (분위기 형성, 화면 전환, 특수 연출 등)</li>
+          </ul>
+        </li>
+        <li><strong>사운드 재질 (Material):</strong> 사운드의 톤 기반 (메탈, 돌, 흙, 나무 등)</li>
+        <li><strong>사운드 무게 (Weight):</strong> 대상의 크기 및 저역 비중</li>
+        <li><strong>사운드 동작 (Action):</strong> Idle, Attack, Swing 등</li>
+      </ul>
+    </div></div>
+  </div>
+
+  <!-- 3. 진행내역 -->
+  <div class="acc">
+    <div class="ach" onclick="tog(this)"><span class="aar">▶</span><span class="att">3. 진행내역 — 실험 로그</span><span class="asub">Experiment Log</span></div>
+    <div class="ab2"><div class="ai">
+
+      <p style="margin-bottom:16px;">사운드 자동화 파이프라인의 첫 검증 대상으로 <strong>Foley — 특히 Footstep 싱크</strong>를 선택했다. Foley는 영상 내 물리적 움직임과 1:1로 대응되는 사운드로, 타이밍 정확도가 가장 명확하게 검증 가능하다. 발소리 한 개가 맞고 틀리는지를 수치로 측정할 수 있어 AI 분석 능력의 실무 적용 가능성을 판단하기에 가장 적합한 케이스였다. 결과적으로 이 과정에서 AI의 구조적 한계와 강점이 동시에 드러났으며, 이는 이후 방향 설정의 근거가 됐다.</p>
+
+      <h4>시도 1 — 픽셀 차분 (Frame Differencing) <span class="bdg f">실패</span></h4>
+      <p><strong>방법:</strong> 발 ROI를 고정 좌표로 지정하고 프레임 간 픽셀 변화량을 측정해 접지 순간을 감지하는 방식. 정밀도 향상을 위해 60fps 추출도 시도했으나 동일한 결과.</p>
+      <p><strong>실패 원인:</strong> 카메라 무빙 발생 시 발이 지정된 ROI 밖으로 이탈하며 배경 변화나 컷 전환이 접지로 오탐된다. 이는 정밀도 문제가 아니라 근본적인 ROI 추적 구조의 한계다.</p>
+
+      <h4>시도 2 — Pose Estimation (MediaPipe) <span class="bdg w">부분 성공, 구조적 한계 확인</span></h4>
+      <p><strong>방법:</strong> 발목 키포인트 Y좌표의 로컬 최저점을 접지 순간으로 판단하는 방식. 장고 클립(confidence 0.3 기준, 유효 프레임 63.9%, 접지 후보 30개)과 윈터솔져 클립(유효 23.9%, 액션씬 카메라 무빙으로 불안정)에서 테스트.</p>
+      <pre>PE 감지       GT(정답)     오차
+6933ms   →   6923ms     +10ms   ✓
+7783ms   →   7762ms     +21ms   ✓
+7216ms   →   7762ms    -546ms   ✗
+8100ms   →   7762ms    +338ms   ✗</pre>
+      <p><strong>핵심 발견:</strong> 접지 하나당 후보가 여러 개 출력되는 노이즈 문제와 함께, 보다 근본적인 구조적 차이가 확인됐다. HAND·CLOTH는 "모션의 존재(existence)"를 감지하는 문제인 반면, Footstep은 "모션의 종료 순간(motion termination)"을 감지하는 문제다 — 이 둘은 본질적으로 다른 구조다. 발목 직접 추적 방식으로는 한계가 명확했다.</p>
+
+      <h4>시도 3 — STATIC vs WALKING 디폴트 전략 변경 (v2.3 → 롤백) <span class="bdg f">롤백</span></h4>
+      <p><strong>방법:</strong> 씬 초반 정적 판단 오류를 해결하기 위해 프롬프트 디폴트를 walking으로 설정.</p>
+      <p><strong>실패 원인:</strong> 실제 테스트에서 초반 누락 문제가 해결되지 않았고, 무조건 walking 가정은 실제 정적 씬에서 과도한 Footstep 출력을 유발했다. v2.301에서 롤백.</p>
+
+      <h4>시도 4 — 멀티 신호 패턴 분석 (프롬프트 고도화) <span class="bdg w">부분 적용</span></h4>
+      <p><strong>방법:</strong> 단일 신호 의존에서 벗어나 복수 신호 교차검증 구조 설계.</p>
+      <ul>
+        <li><strong>HEAD_DIP:</strong> 머리/모자의 수직 진동 — 카메라 트래킹 중 Y좌표 비교 불안정</li>
+        <li><strong>SHOULDER_OSCILLATION:</strong> 어깨 라인의 좌우·수직 진동</li>
+        <li><strong>TORSO_SWAY:</strong> 셔츠 V라인 좌우 진동 — 정면샷에서만 유효</li>
+      </ul>
+      <p><strong>한계:</strong> 앵글과 조명 조건에 따라 신호 가용성이 크게 달라지며, armed/crouching/carrying 등 자세 변형 시 분류 기준이 복잡해진다. 특정 앵글·저조도 환경에서는 픽셀 정보 자체가 부족해진다.</p>
+
+      <h4>시도 5 — GAIT_MODIFIER 도입 <span class="bdg w">도입, 오용 문제 발생</span></h4>
+      <p><strong>방법:</strong> 무기 조준, 크라우칭, 하중 이동 등 자세 변형 상태에서 HEAD_DIP 신호 가중치를 낮추는 GAIT_MODIFIER 규칙 추가.</p>
+      <p><strong>발생한 오용 패턴:</strong></p>
+      <pre>프롬프트 의도: "armed_stance → HEAD_DIP 가중치 줄여라"
+API 실제 동작: "armed_stance → 아마 안 걷고 있겠지 → static 처리"</pre>
+      <p>신호 약함과 이동 없음을 혼동. GAIT_MODIFIER는 신호 가중치 조정 전용이었으나 API가 이를 이동 여부 판단에 잘못 적용했다. v2.303에서 "신호 약함 ≠ 이동 없음" 규칙 명시적으로 추가해 수정.</p>
+
+      <h4>시도 6 — ffmpeg + Claude API 파이프라인 구축 <span class="bdg w">구조 완성, 근본 한계 재확인</span></h4>
+      <p><strong>방법:</strong> ffmpeg 기반 파이프라인과 Claude API를 결합한 자동화 구조 구축.</p>
+      <ul>
+        <li>4fps 스캔 → 전체 씬 파악 및 보행 구간 감지</li>
+        <li>보행 구간만 30fps 추출 + 프레임별 타임스탬프 부여</li>
+        <li>Claude API에 "이 180장을 순서대로 봐, 각 장의 시간은 이거야" 형태로 전송</li>
+        <li>JSON 결과 반환</li>
+      </ul>
+      <p><strong>근본 한계 확인:</strong> Claude는 이미지 90장을 받아도 "연속된 영상"이 아닌 개별 이미지로 처리한다. 어깨 Y좌표가 프레임 5에서 얼마, 프레임 6에서 얼마 — 이 수치를 비교해 로컬 미니멈을 계산하는 것이 불가능하다. 결과적으로 "걷고 있으니까 발소리 있겠지"로 처리하는 방식으로 fallback된다.</p>
+
+      <h4>시도 7 — OpenCV 3신호 수치 추적 <span class="bdg f">동일한 벽 재확인</span></h4>
+      <p><strong>방법:</strong> AI에서 타이밍 판단을 분리하고, OpenCV로 3신호를 동시 수치 측정 후 로컬 미니멈으로 접지를 감지하는 구조. Claude는 분류만 담당.</p>
+      <ul>
+        <li><strong>어깨 Y</strong> — 측면샷에서 유효</li>
+        <li><strong>어깨 X</strong> — 정면 트래킹샷에서 유효, 카메라 줌인 영향 없음</li>
+        <li><strong>머리 Y</strong> — 보조 신호</li>
+      </ul>
+      <p>MIN_PEAK_DIST (8, 24, 30), MIN_PEAK_PROM (1.0, 2.0, 3.0, 5.0) 등 파라미터 조정 시도.</p>
+      <p><strong>결론:</strong> 어떤 파라미터 조합에서도 같은 한계에 부딪혔다. MediaPipe 어깨/머리 추적으로 발 접지 타이밍을 잡는 것은 "Motion existence는 감지하지만 Motion termination moment는 감지하지 못한다"는 시도 2에서 도출한 결론과 정확히 동일한 벽이다. 다른 방향에서 접근했지만 같은 구조적 한계로 귀결됐다.</p>
+
+      <h4>→ 피벗: Foley 정밀 싱크 → Ambience 파이프라인</h4>
+      <p>Ambience는 "언제"가 아니라 "무엇이 보이는가"의 문제다. 씬 분류, 공간 크기, 환경 특성 파악에서 Claude API는 일관되게 실무 수준의 결과를 냈다. AI가 잘 풀 수 있는 구조의 문제부터 완성도를 높이는 방향으로 전환.</p>
+
+    </div></div>
+  </div>
+
+  <!-- 4. 프롬프트 버전 히스토리 -->
+  <div class="acc">
+    <div class="ach" onclick="tog(this)"><span class="aar">▶</span><span class="att">4. 프롬프트 버전 히스토리</span><span class="asub">v1.0 → v2.303</span></div>
+    <div class="ab2"><div class="ai">
+      <table class="tbl">
+        <tr><th>버전</th><th>핵심 변경사항</th></tr>
+        <tr><td>v1.0</td><td>최초. 4카테고리, 캐릭터 추적</td></tr>
+        <tr><td>v1.1</td><td>모노 전용. FOOTSTEP/HAND L/R 제거</td></tr>
+        <tr><td>v2.0</td><td>CLOTH_MOVEMENT 통합. first_contact_reasoning 추가</td></tr>
+        <tr><td>v2.1~Final</td><td>ON-SCREEN ONLY. 2패스 구조화</td></tr>
+        <tr><td>v2.2</td><td>BODY VISIBILITY 3단계 분류</td></tr>
+        <tr><td>v2.3</td><td>CLOTH LINKED/INDEPENDENT. STRIDE EXTRAPOLATION. Be deterministic</td></tr>
+        <tr><td>v2.301</td><td>STATIC/FIRST FRAME RULE 롤백</td></tr>
+        <tr><td>v2.302</td><td>HEAD_DIP / SHOULDER / TORSO 3신호 교차검증</td></tr>
+        <tr><td><strong>v2.303</strong> <span class="cur">현재</span></td><td>GAIT_MODIFIER 오용 방지. "신호 약함 ≠ 이동 없음" 명시</td></tr>
+      </table>
+      <h4 style="margin-top:14px;">Ambience v1.0</h4>
+      <table class="tbl"><tr><th>버전</th><th>핵심 변경사항</th></tr><tr><td><strong>v1.0</strong> <span class="cur">현재</span></td><td>전 구간 커버 강제. 씬 전환 크로스페이드. PRIMARY/SECONDARY 레이어. 6개 카테고리</td></tr></table>
+    </div></div>
+  </div>
+</div>
+</section>
+
+<!-- PROMPTS -->
+<section id="sec-prompts">
+<div class="pw">
+  <div class="pt1">Prompt Documentation</div>
+  <div class="pt2">각 프롬프트의 설계 원칙</div>
+  <div class="ptabs"><div class="ptab on" onclick="selP('f',this)">Foley v2.303</div><div class="ptab" onclick="selP('p',this)">Pipeline v2 (OpenCV)</div><div class="ptab" onclick="selP('a',this)">Ambience v1.0</div></div>
+  <div id="pt-f" class="pc on"><pre id="pFprompt"></pre></div>
+  <div id="pt-p" class="pc"><pre id="pP"></pre></div>
+  <div id="pt-a" class="pc"><pre id="pA2"></pre></div>
+</div>
+</section>
+
+<div class="tip" id="tip"></div>
+
+<script>
+function S(id,el){document.querySelectorAll('section').forEach(s=>s.classList.remove('on'));document.querySelectorAll('.na').forEach(a=>a.classList.remove('on'));document.getElementById('sec-'+id).classList.add('on');el.classList.add('on');}
+function tog(h){h.parentElement.classList.toggle('op');}
+function tog2(h){h.parentElement.classList.toggle('op');}
+function selP(id,el){document.querySelectorAll('.ptab').forEach(t=>t.classList.remove('on'));document.querySelectorAll('.pc').forEach(c=>c.classList.remove('on'));el.classList.add('on');document.getElementById('pt-'+id).classList.add('on');}
+
+// ── STATE ──
+const G={px:0,dur:0,foleyData:null,ambiData:null};
+let vF=null,raf=null;
+
+// ── VIDEO ──
+function dov(e){e.preventDefault();document.getElementById('vdrop').classList.add('ov');}
+function dlv(){document.getElementById('vdrop').classList.remove('ov');}
+function ddp(e){e.preventDefault();dlv();const f=e.dataTransfer.files[0];if(f&&f.type.startsWith('video/'))apV(f);}
+function loadV(i){if(i.files[0])apV(i.files[0]);}
+function apV(f){
+  vF=f;const v=document.getElementById('dv');v.src=URL.createObjectURL(f);v.load();
+  document.getElementById('vdW').style.display='none';
+  document.getElementById('vtW').style.display='block';
+  document.getElementById('vname').textContent=f.name;chk();
+}
+function ejectV(){
+  const v=document.getElementById('dv');v.pause();stopRAF();v.src='';
+  document.getElementById('vdW').style.display='block';
+  document.getElementById('vtW').style.display='none';
+  document.getElementById('vfi').value='';vF=null;
+  document.getElementById('vpbtn').textContent='▶';
+  chk();
+}
+function toggleVid(){
+  const v=document.getElementById('dv'),b=document.getElementById('vpbtn');
+  if(!v.src)return;
+  if(v.paused){v.play();b.textContent='⏸';startRAF();}
+  else{v.pause();b.textContent='▶';stopRAF();}
+}
+function seekVid(s){const v=document.getElementById('dv');if(v.src){v.currentTime=Math.max(0,(v.currentTime||0)+s);updPH();}}
+function startRAF(){if(raf)return;const loop=()=>{updPH();raf=requestAnimationFrame(loop);};raf=requestAnimationFrame(loop);}
+function stopRAF(){if(raf){cancelAnimationFrame(raf);raf=null;}updPH();}
+document.addEventListener('DOMContentLoaded',()=>{
+  const v=document.getElementById('dv');
+  v.addEventListener('play',startRAF);
+  v.addEventListener('pause',()=>{stopRAF();document.getElementById('vpbtn').textContent='▶';});
+  v.addEventListener('ended',()=>{stopRAF();document.getElementById('vpbtn').textContent='▶';});
+  v.addEventListener('seeked',updPH);
+  v.addEventListener('loadedmetadata',()=>{if(!G.dur&&isFinite(v.duration)){G.dur=Math.round(v.duration*1000);}updPH();});
+  v.addEventListener('timeupdate',()=>{
+    const t2=tc((v.currentTime||0)*1000);
+    document.getElementById('vct2').textContent=t2;
+  });
+});
+function chk(){document.getElementById('abtn').disabled=!vF;}
+// API key is managed server-side
+
+// ── JSON DOWNLOAD ──
+function dlJSON(type){
+  const data=type==='foley'?G.foleyData:G.ambiData;
+  if(!data)return;
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=`${type}_analysis_${Date.now()}.json`;a.click();
+}
+
+// ── FRAMES ──
+async function exF(v,fps,max){
+  const c=document.createElement('canvas'),ctx=c.getContext('2d');
+  const sc=Math.min(1,640/Math.max(v.videoWidth,1));c.width=Math.round(v.videoWidth*sc);c.height=Math.round(v.videoHeight*sc);
+  const fr=[];
+  for(let t=0;t<v.duration&&fr.length<max;t+=1/fps){v.currentTime=t;await new Promise(r=>{v.onseeked=r;});ctx.drawImage(v,0,0,c.width,c.height);fr.push({b64:c.toDataURL('image/jpeg',.6).split(',')[1],ms:Math.round(t*1000)});}
+  return fr;
+}
+
+// ── ANALYZE ──
+async function runA(){
+  if(!vF)return;
+  const btn=document.getElementById('abtn');btn.disabled=true;btn.textContent='Analyzing...';btn.classList.add('run');
+  document.getElementById('pg').style.display='block';
+  const sp=(n)=>{for(let i=1;i<=4;i++){const e=document.getElementById('p'+i);e.className='ps'+(i<n?' d':i===n?' a':'');}document.getElementById('pb').style.width=(n/4*100)+'%';};
+  try{
+    sp(1);const v=document.getElementById('dv');
+    await new Promise(r=>{if(v.readyState>=1)r();else v.onloadedmetadata=r;});
+    const fr=await exF(v,4,60);const ts=fr.map(f=>f.ms);const dur=Math.round(v.duration*1000);
+    sp(2);
+    const [aD,fD]=await Promise.all([
+      cC(fr,ts,dur,'ambience').then(d=>{sp(3);return d;}),
+      cC(fr,ts,dur,'foley')
+    ]);
+    sp(4);renderBoth(fD,aD,dur);
+  }catch(e){alert('오류: '+e.message);console.error(e);}
+  finally{btn.disabled=false;btn.textContent='Analyze — Ambience + Foley';btn.classList.remove('run');document.getElementById('pg').style.display='none';}
+}
+
+async function cC(fr,ts,dur,type){
+  // 로컬 서버 경유 (server.py 실행 중일 때)
+  // 직접 호출은 브라우저 CORS 정책으로 차단됨
+  const payload={frames:fr,timestamps:ts,duration_ms:dur,type};
+  const r=await fetch('http://localhost:5000/analyze',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(payload)
+  });
+  if(!r.ok){const e=await r.json();throw new Error(e.error||r.statusText);}
+  return r.json();
+}
+
+// ── PASTE ──
+function rPaste(type){
+  const raw=(document.getElementById('jpaste').value||'').trim();if(!raw){alert('JSON을 붙여넣으세요.');return;}
+  let data;try{let t=raw;if(t.startsWith('```')){t=t.split('\n').slice(1).join('\n').split('```')[0];}data=JSON.parse(t);}catch(e){alert('JSON 파싱 오류: '+e.message);return;}
+  const dur=(data.analysis_meta||{}).video_duration_ms||10000;
+  if(type==='ambience'){G.ambiData=data;}else{G.foleyData=data;}
+  renderBoth(G.foleyData,G.ambiData,dur);
+}
+
+// ── TC ──
+function tc(ms){if(!ms&&ms!==0)return'—';ms=Math.max(0,ms);const s=Math.floor(ms/1000),m=Math.floor(s/60),ss=s%60,f=Math.floor((ms%1000)/33.33);return`${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}:${String(f).padStart(2,'0')}`;}
+
+// ── COLORS ──
+const TC={
+  ROOM_TONE:{bg:'#1c3d5a',hi:'#1971c2'},ENVIRONMENT:{bg:'#1a3a2a',hi:'#2f9e44'},
+  NATURE:{bg:'#1e3010',hi:'#5c940d'},CROWD:{bg:'#3d2010',hi:'#e67700'},
+  WEATHER:{bg:'#0a2d3d',hi:'#1098ad'},MECHANICAL:{bg:'#2a1550',hi:'#6741d9'},
+  FOOTSTEP:{bg:'#3d1010',hi:'#c92a2a'},CLOTH_MOVEMENT:{bg:'#2a1550',hi:'#6741d9'},HAND:{bg:'#0a2d3d',hi:'#1098ad'}
+};
+
+// ── RENDER BOTH ──
+function renderBoth(foleyData, ambiData, dur){
+  G.foleyData=foleyData; G.ambiData=ambiData;
+  const fEvents=(foleyData&&foleyData.events)||[];
+  const fChars=(foleyData&&foleyData.characters)||[];
+  const aLayers=(ambiData&&ambiData.layers)||[];
+  const aScenes=(ambiData&&ambiData.scenes)||[];
+  const aTrans=(ambiData&&ambiData.transitions)||[];
+
+  // calc dur
+  let maxDur=dur||0;
+  fEvents.forEach(e=>{if((e.end_ms||0)>maxDur)maxDur=e.end_ms;});
+  aLayers.forEach(l=>{if((l.end_ms||0)>maxDur)maxDur=l.end_ms;});
+  G.dur=Math.max(maxDur,5000);
+
+  // status
+  document.getElementById('utbar').style.display='flex';
+  document.getElementById('utleg').style.display='flex';
+  document.getElementById('uFS').textContent=fEvents.filter(e=>e.category==='FOOTSTEP').length;
+  document.getElementById('uCL').textContent=fEvents.filter(e=>e.category==='CLOTH_MOVEMENT').length;
+  document.getElementById('uHD').textContent=fEvents.filter(e=>e.category==='HAND').length;
+  document.getElementById('uLY').textContent=aLayers.length;
+  document.getElementById('uSC').textContent=aScenes.length;
+
+  // show download buttons
+  const anyResult=fEvents.length||aLayers.length;
+  const dlSec=document.getElementById('dlSection');
+  if(dlSec){dlSec.style.display=anyResult?'block':'none';}
+  document.getElementById('dlF').style.display=fEvents.length?'block':'none';
+  document.getElementById('dlA').style.display=aLayers.length?'block':'none';
+
+  document.getElementById('utempty').style.display='none';
+  document.getElementById('utbody').style.display='flex';
+
+  const scroll=document.getElementById('utscroll');
+  const uth=document.getElementById('uth');
+  const ti=document.getElementById('utinner');
+  uth.innerHTML='';ti.innerHTML='';
+
+  setTimeout(()=>{
+    const aw=scroll.clientWidth||700;
+    // 루러 높이(24px) 스페이서 — 우측 ruler와 수직 정렬 맞춤
+    const rSpacer=document.createElement('div');
+    rSpacer.style.cssText='height:24px;background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0;box-sizing:border-box;';
+    uth.appendChild(rSpacer);
+    const px=Math.max(0.03,(aw-8)/G.dur);
+    G.px=px;
+    const tw=Math.max(aw,G.dur*px+40);
+    ti.style.width=tw+'px';
+
+    // ruler
+    const rc=document.getElementById('utrc');
+    rc.width=tw;rc.style.width=tw+'px';
+    const ctx=rc.getContext('2d');ctx.clearRect(0,0,tw,24);
+    let maj=5000,min=1000;
+    if(G.dur>60000){maj=30000;min=10000;}else if(G.dur>20000){maj=10000;min=2000;}
+    else if(G.dur>10000){maj=5000;min=1000;}else{maj=2000;min=500;}
+    for(let ms=0;ms<=G.dur+maj;ms+=min){
+      const x=ms*px,iM=ms%maj===0;
+      ctx.strokeStyle=iM?'#94a3b8':'#cbd5e1';ctx.lineWidth=.5;
+      ctx.beginPath();ctx.moveTo(x,iM?2:14);ctx.lineTo(x,24);ctx.stroke();
+      if(iM){ctx.fillStyle='#64748b';ctx.font='8px JetBrains Mono,monospace';ctx.fillText(tc(ms),x+2,11);}
+    }
+
+    // ── FOLEY SECTION ──
+    // 모든 행 높이를 JS 상수로 명시 → 좌우 정렬 보장
+    const H_SEP=22, H_FOLD=20, H_TRK=38;
+    if(fEvents.length||fChars.length){
+      // section header — 좌우 동일 높이 명시
+      const fsep=document.createElement('div');
+      fsep.style.cssText=`height:${H_SEP}px;display:flex;align-items:center;padding:0 10px;background:var(--bg4);border-bottom:1px solid var(--border);border-top:1px solid var(--border);font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;width:${tw}px;box-sizing:border-box;flex-shrink:0;`;
+      fsep.innerHTML='<span style="color:#c92a2a;letter-spacing:.1em;">FOLEY</span>';
+      ti.appendChild(fsep);
+      const fsh=document.createElement('div');
+      fsh.style.cssText=`height:${H_SEP}px;display:flex;align-items:center;padding:0 8px;background:var(--bg4);border-bottom:1px solid var(--border);border-top:1px solid var(--border);font-family:'JetBrains Mono',monospace;font-size:8px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--txt3);box-sizing:border-box;flex-shrink:0;`;
+      fsh.textContent='FOLEY'; uth.appendChild(fsh);
+
+      const cids=fChars.length?fChars.map(c=>c.character_id):[...new Set(fEvents.map(e=>e.character_id).filter(Boolean))];
+      const CPALS=['#e85050','#50a0e8','#e8c030','#60d0a0','#d060e0'];
+      const cmap={};fChars.forEach((c,i)=>{cmap[c.character_id]=CPALS[i%CPALS.length];});
+      fEvents.forEach(e=>{if(e.character_id&&!cmap[e.character_id])cmap[e.character_id]=CPALS[Object.keys(cmap).length%CPALS.length];});
+
+      cids.forEach(cid=>{
+        const ce=fEvents.filter(e=>e.character_id===cid);
+        if(!ce.length)return;
+        const col=cmap[cid]||CPALS[0];
+        const chObj=fChars.find(c=>c.character_id===cid);
+        const chDesc=chObj?(chObj.description||''):'';
+        const chFoot=chObj?(chObj.footwear||''):'';
+        const chDescStr=[chDesc,chFoot].filter(Boolean).join(' · ');
+
+        // 좌측 폴더 헤더 (ID만, 높이 H_FOLD 고정)
+        const fhdr=document.createElement('div');
+        fhdr.style.cssText=`height:${H_FOLD}px;display:flex;align-items:center;padding:0 7px;gap:6px;background:var(--bg2);border-bottom:1px solid var(--border);box-sizing:border-box;flex-shrink:0;`;
+        fhdr.innerHTML=`<span style="width:2px;height:12px;border-radius:1px;background:${col};flex-shrink:0;display:inline-block;"></span><span style="color:${col};font-size:9.5px;font-weight:600;">${cid}</span>`;
+        uth.appendChild(fhdr);
+
+        // 우측 폴더 구분자 — description을 여기에 표시 (Ambience 씬 레이블 방식, 잘림 없음)
+        const fhdrR=document.createElement('div');
+        fhdrR.style.cssText=`height:${H_FOLD}px;background:var(--bg2);border-bottom:1px solid var(--border);position:relative;width:${tw}px;box-sizing:border-box;overflow:hidden;flex-shrink:0;`;
+        const cidLbl=`<span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);font-family:'JetBrains Mono',monospace;font-size:8px;font-weight:600;color:${col};text-transform:uppercase;letter-spacing:.05em;">${cid}</span>`;
+        const descLbl=chDescStr?`<span style="position:absolute;left:60px;top:50%;transform:translateY(-50%);font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--txt2);letter-spacing:.02em;white-space:nowrap;">— ${chDescStr}</span>`:'';
+        fhdrR.innerHTML=cidLbl+descLbl;
+        ti.appendChild(fhdrR);
+
+        // 카테고리별 트랙 — 높이 H_TRK 고정
+        ['FOOTSTEP','CLOTH_MOVEMENT','HAND'].forEach(cat=>{
+          const evs=ce.filter(e=>e.category===cat);if(!evs.length)return;
+          const st=TC[cat];
+          // 좌측 트랙 헤더
+          const thd=document.createElement('div');
+          thd.style.cssText=`height:${H_TRK}px;display:flex;align-items:center;padding:0 8px 0 11px;border-bottom:1px solid var(--border);gap:5px;background:var(--bg3);box-sizing:border-box;flex-shrink:0;`;
+          thd.innerHTML=`<div style="width:2px;height:14px;border-radius:1px;background:${st.hi};flex-shrink:0;"></div><div><div style="font-size:10px;font-weight:500;color:var(--txt);">${cat==='CLOTH_MOVEMENT'?'CLOTH MOV':cat}</div><div style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--txt3);text-transform:uppercase;letter-spacing:.03em;">${evs.length} events</div></div>`;
+          uth.appendChild(thd);
+          // 우측 트랙 행
+          const row=document.createElement('div');
+          row.style.cssText=`height:${H_TRK}px;border-bottom:1px solid var(--border);position:relative;background:var(--bg3);width:${tw}px;box-sizing:border-box;flex-shrink:0;`;
+          evs.sort((a,b)=>(a.start_ms||0)-(b.start_ms||0)).forEach(ev=>{mkClip(row,ev,st,true,px,false);});
+          ti.appendChild(row);
+        });
+      });
+    }
+
+    // ── AMBIENCE SECTION — 4-lane fixed DAW packing ──
+    if(aLayers.length){
+      const ALANES=4;
+      // section header — H_SEP와 동일
+      const asep=document.createElement('div');
+      asep.style.cssText=`height:${H_SEP}px;display:flex;align-items:center;padding:0 10px;background:var(--bg4);border-bottom:1px solid var(--border);border-top:1px solid var(--border);font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;width:${tw}px;box-sizing:border-box;flex-shrink:0;`;
+      asep.innerHTML='<span style="color:var(--accent);letter-spacing:.1em;">AMBIENCE</span>';
+      ti.appendChild(asep);
+      const ash=document.createElement('div');
+      ash.style.cssText=`height:${H_SEP}px;display:flex;align-items:center;padding:0 8px;background:var(--bg4);border-bottom:1px solid var(--border);border-top:1px solid var(--border);font-family:'JetBrains Mono',monospace;font-size:8px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--txt3);box-sizing:border-box;flex-shrink:0;`;
+      ash.textContent='AMBIENCE'; uth.appendChild(ash);
+
+      // 4-lane 패킹
+      const sorted=[...aLayers].sort((a,b)=>(a.start_ms||0)-(b.start_ms||0));
+      const laneEnd=new Array(ALANES).fill(0);
+      sorted.forEach(l=>{
+        const s=l.start_ms||0;
+        let ln=laneEnd.findIndex(e=>e<=s);
+        if(ln<0)ln=laneEnd.reduce((mi,v,i,a)=>v<a[mi]?i:mi,0);
+        l._lane=ln;
+        laneEnd[ln]=l.end_ms||s+(l.duration_ms||1000);
+      });
+      const usedLanes=[...new Set(sorted.map(l=>l._lane))].sort();
+
+      // scene cut lines + crossfade zones
+      aTrans.forEach(t=>{
+        const xms=(t.cut_point_ms||0)*px;const xf=(t.crossfade_ms||33)*px;
+        const z=document.createElement('div');
+        z.style.cssText=`position:absolute;left:${(t.cut_point_ms||0)*px-xf}px;width:${xf*2}px;top:0;bottom:0;background:rgba(25,113,194,.04);pointer-events:none;z-index:1;`;
+        ti.appendChild(z);
+        const line=document.createElement('div');
+        line.style.cssText=`position:absolute;left:${xms}px;top:0;bottom:0;width:1px;background:rgba(25,113,194,.18);pointer-events:none;z-index:2;`;
+        ti.appendChild(line);
+      });
+
+      // 씬 레이블 행 — H_FOLD 높이로 통일
+      if(aScenes.length){
+        const slrow=document.createElement('div');
+        slrow.style.cssText=`height:${H_FOLD}px;border-bottom:1px solid var(--border);background:var(--bg4);position:relative;width:${tw}px;box-sizing:border-box;flex-shrink:0;`;
+        aScenes.forEach(s=>{
+          const lbl=document.createElement('span');
+          lbl.style.cssText=`position:absolute;left:${(s.start_ms||0)*px+3}px;top:50%;transform:translateY(-50%);font-family:'JetBrains Mono',monospace;font-size:7px;color:var(--txt3);letter-spacing:.04em;text-transform:uppercase;white-space:nowrap;`;
+          lbl.textContent=`${s.scene_id}${s.location?' — '+s.location:''}`;
+          slrow.appendChild(lbl);
+        });
+        ti.appendChild(slrow);
+        const slhdr=document.createElement('div');
+        slhdr.style.cssText=`height:${H_FOLD}px;background:var(--bg4);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 8px;font-family:'JetBrains Mono',monospace;font-size:7.5px;color:var(--txt3);letter-spacing:.04em;text-transform:uppercase;box-sizing:border-box;flex-shrink:0;`;
+        slhdr.textContent='Scenes'; uth.appendChild(slhdr);
+      }
+
+      // 4개 lane 트랙 — H_TRK 고정
+      usedLanes.forEach(ln=>{
+        const laneEvs=sorted.filter(l=>l._lane===ln);
+        // 좌측 헤더
+        const thd=document.createElement('div');
+        thd.style.cssText=`height:${H_TRK}px;display:flex;align-items:center;padding:0 8px 0 11px;border-bottom:1px solid var(--border);gap:5px;background:${ln%2===0?'var(--bg3)':'var(--bg)'};box-sizing:border-box;flex-shrink:0;`;
+        thd.innerHTML=`<div style="width:2px;height:14px;border-radius:1px;background:var(--accent);flex-shrink:0;"></div><div><div style="font-size:10px;font-weight:500;color:var(--txt);">Ambience ${ln+1}</div><div style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--txt3);text-transform:uppercase;letter-spacing:.03em;">${laneEvs.length} clips</div></div>`;
+        uth.appendChild(thd);
+        // 우측 트랙 행
+        const row=document.createElement('div');
+        row.style.cssText=`height:${H_TRK}px;border-bottom:1px solid var(--border);position:relative;background:${ln%2===0?'var(--bg3)':'var(--bg)'};width:${tw}px;box-sizing:border-box;flex-shrink:0;`;
+        laneEvs.forEach(l=>{
+          const st=TC[l.ambience_type]||TC.ROOM_TONE;
+          const isPriClip=l.layer_role==='primary';
+          mkClip(row,l,st,isPriClip,px,true);
+        });
+        ti.appendChild(row);
+      });
+    }
+
+
+    // scroll sync: vertical → header, horizontal → ruler + hscrollbar
+    let syncing=false;
+    scroll.onscroll=()=>{
+      uth.scrollTop=scroll.scrollTop;
+      const rc2=document.getElementById('utrc');
+      rc2.style.left=(-scroll.scrollLeft)+'px';
+      if(!syncing){syncing=true;document.getElementById('uthsinner').scrollLeft=scroll.scrollLeft;syncing=false;}
+      updPH();
+    };
+    const hsinner=document.getElementById('uthsinner');
+    if(hsinner){
+      document.getElementById('uthstrack').style.width=tw+'px';
+      hsinner.onscroll=()=>{
+        if(!syncing){syncing=true;scroll.scrollLeft=hsinner.scrollLeft;document.getElementById('utrc').style.left=(-hsinner.scrollLeft)+'px';syncing=false;updPH();}
+      };
+    }
+    document.getElementById('utrw').onclick=e2=>{
+      const r2=document.getElementById('utrw').getBoundingClientRect();
+      sk((e2.clientX-r2.left+scroll.scrollLeft)/px);
+    };
+    scroll.onclick=e2=>{
+      if(e2.target.closest('.clip'))return;
+      const r2=ti.getBoundingClientRect();
+      sk((e2.clientX-r2.left)/px);
+    };
+    updPH();
+  },50);
+}
+
+function mkClip(row,l,st,isPri,px,isA){
+  const s=l.start_ms||0,e=l.end_ms||(s+(l.duration_ms||100));
+  const dispEnd=!isA&&l.category==='FOOTSTEP'?Math.max(e,s+150):e;
+  const x=s*px,w=Math.max(5,(dispEnd-s)*px);
+  const xfi=(l.crossfade_in_ms||0)*px,xfo=(l.crossfade_out_ms||0)*px;
+  const clip=document.createElement('div');clip.className='clip';
+  clip.style.cssText=`left:${x}px;width:${w}px;background:${st.bg};border-left:${isPri?3:2}px solid ${st.hi};opacity:${isPri?1:.8};`;
+  clip.innerHTML=`${xfi>2?`<div class="xfi" style="width:${Math.min(xfi,w/2)}px"></div>`:''}${xfo>2?`<div class="xfo" style="width:${Math.min(xfo,w/2)}px"></div>`:''}<div class="cl">${l.description||l.layer_id||l.event_id||'—'}</div>`;
+  clip.addEventListener('mouseenter',e2=>shTip(e2,l,st,isA));
+  clip.addEventListener('mousemove',mvTip);clip.addEventListener('mouseleave',hideTip);
+  clip.addEventListener('click',e2=>{e2.stopPropagation();sk(s);});
+  row.appendChild(clip);
+}
+
+function sk(ms){ms=Math.max(0,ms);const v=document.getElementById('dv');if(v&&v.src&&v.readyState>0)v.currentTime=ms/1000;updPH();}
+function updPH(){const v=document.getElementById('dv');if(v&&v.src)phAt((v.currentTime||0)*1000);}
+function phAt(ms){
+  if(!G.px)return;
+  const scroll=document.getElementById('utscroll');
+  const ph=document.getElementById('utph');const pht=document.getElementById('utpht');
+  if(!ph||!pht||!scroll)return;
+  const xa=ms*G.px;
+  ph.style.display='block';ph.style.left=(xa-scroll.scrollLeft)+'px';
+  pht.style.display='block';pht.style.left=xa+'px';
+  document.getElementById('uttc').textContent=tc(ms);
+}
+function shTip(e2,l,st,isA){
+  const t=document.getElementById('tip');
+  if(isA){
+    t.innerHTML=`<div style="color:${st.hi};font-weight:600;margin-bottom:4px;">${l.layer_id||'—'}</div>
+<div><span class="tk">type</span>${l.ambience_type||'—'}</div>
+<div><span class="tk">role</span>${l.layer_role||'—'}</div>
+<div><span class="tk">start</span>${tc(l.start_ms)}</div>
+<div><span class="tk">end</span>${tc(l.end_ms)}</div>
+<div><span class="tk">intensity</span>${l.intensity||'—'}</div>
+<div><span class="tk">distance</span>${l.distance||'—'}</div>
+${l.description?`<div style="margin-top:4px;color:#6c757d;font-size:10px;border-top:1px solid #dee2e6;padding-top:4px;">${l.description}</div>`:''}`;
+  }else{
+    t.innerHTML=`<div style="color:${st.hi};font-weight:600;margin-bottom:4px;">${l.event_id||l.category||'—'}</div>
+<div><span class="tk">category</span>${l.category||'—'}</div>
+<div><span class="tk">start</span>${tc(l.start_ms)}</div>
+<div><span class="tk">end</span>${tc(l.end_ms)}</div>
+<div><span class="tk">confidence</span>${l.timing_confidence||'—'}</div>
+${l.description?`<div style="margin-top:4px;color:#6c757d;font-size:10px;border-top:1px solid #dee2e6;padding-top:4px;">${l.description}</div>`:''}`;
+  }
+  t.style.display='block';mvTip(e2);
+}
+function mvTip(e2){const t=document.getElementById('tip');t.style.left=Math.min(e2.clientX+14,window.innerWidth-230)+'px';t.style.top=Math.min(e2.clientY+14,window.innerHeight-260)+'px';}
+function hideTip(){document.getElementById('tip').style.display='none';}
+
+document.getElementById('pFprompt').textContent = (function(){
+var lines = [];
+lines.push("# Foley Analysis Prompt \u2014 v2.303");
+lines.push("> Claude \uAE30\uBC18 Foley \uC774\uBCA4\uD2B8 \uD0C0\uC784\ucf54\ub4dc \uCD94\uCD9C");
+lines.push("> \uC124\uACC4 \uC6D0\uCE59: On-Screen Coverage / \uBAA8\ub178 \uC804\uC6A9 / \uCE90\ub79D\ud130 \ucd94\uc801 / 2\ud328\uc2a4 \ubd84\uc11d");
+lines.push("");
+lines.push("=================================================");
+lines.push("SYSTEM PROMPT");
+lines.push("=================================================");
+lines.push("You are a professional Foley supervisor AI with expertise in film and game post-production.");
+lines.push("");
+lines.push("Your sole task is to analyze the provided video frames and extract a precise Foley event");
+lines.push("timeline covering only what is VISUALLY CONFIRMED on screen.");
+lines.push("");
+lines.push("You do NOT analyze music, dialogue, hard SFX, or ambience.");
+lines.push("You focus exclusively on physical performance sounds:");
+lines.push("footsteps, body/cloth movement, and hand/prop interactions.");
+lines.push("");
+lines.push("DEFINITIONS \u2014 BODY VISIBILITY CLASSIFICATION:");
+lines.push("");
+lines.push("[ON-SCREEN] \u2014 Foley coverage REQUIRED");
+lines.push("  - FULL_BODY   : Ankle or foot clearly visible");
+lines.push('    \u2192 timing_source must be "foot_visible"');
+lines.push('    \u2192 timing_confidence: "high" is only valid for FULL_BODY scenes');
+lines.push("");
+lines.push("  - PARTIAL_BODY: Camera captures character but feet not visible");
+lines.push("    (Includes: upper body only, bust shot, waist-up, mid-shot, etc.)");
+lines.push("    \u2192 Timing must be inferred from visible body movement signals");
+lines.push('    \u2192 Using "foot_visible" in a PARTIAL_BODY scene is a critical error.');
+lines.push("");
+lines.push("[OFF_SCREEN] \u2014 Foley coverage EXCLUDED");
+lines.push("  - Character entirely absent from frame");
+lines.push("    \u2192 No Foley coverage needed. Exclude from all event output.");
+lines.push("");
+lines.push("COVERAGE RULE:");
+lines.push("All ON-SCREEN characters must be covered with Foley, regardless of which body parts");
+lines.push("are visible. Only OFF-SCREEN characters are excluded.");
+lines.push("");
+lines.push("Output must be valid JSON only. No explanation, no markdown, no extra text.");
+lines.push("");
+lines.push("=================================================");
+lines.push("USER PROMPT");
+lines.push("=================================================");
+lines.push("Analyze the provided video frames and extract a complete Foley event timeline.");
+lines.push("");
+lines.push("ANALYSIS WORKFLOW \u2014 TWO PASS REQUIRED");
+lines.push("");
+lines.push("PASS 1 \u2014 Full Context Survey");
+lines.push("1. Character identification");
+lines.push("   - Identify ALL characters. Assign CHAR_A, CHAR_B, etc.");
+lines.push("   - Note appearance, clothing, footwear");
+lines.push("   - Note when first clearly identifiable");
+lines.push("   - character entering frame \u2260 first foot contact");
+lines.push("");
+lines.push("2. Scene structure");
+lines.push("   - Shot boundaries, camera movement");
+lines.push("   - Visibility class per character: FULL_BODY / PARTIAL_BODY / OFF_SCREEN");
+lines.push("");
+lines.push("3. Foley coverage map");
+lines.push("   - Which signals available per PARTIAL_BODY scene");
+lines.push("   - Flag GAIT_MODIFIER conditions");
+lines.push("");
+lines.push("PASS 2 \u2014 Event Extraction");
+lines.push("Extract individual Foley events following the ON-SCREEN ONLY rule.");
+lines.push("");
+lines.push("---");
+lines.push("FOOTSTEP TIMING \u2014 SIGNAL DETECTION (PARTIAL_BODY)");
+lines.push("");
+lines.push("SIGNAL A \u2014 HEAD_DIP");
+lines.push("Head/hat vertical oscillation. Foot contact = local minimum.");
+lines.push("Amplitude reduced when GAIT_MODIFIER active.");
+lines.push("");
+lines.push("SIGNAL B \u2014 SHOULDER_OSCILLATION");
+lines.push("Front/3/4: tilts left/right. Side: rises and falls.");
+lines.push("");
+lines.push("SIGNAL C \u2014 TORSO_SWAY");
+lines.push("Torso front shifts left/right. Left = left foot contact. Front-facing only.");
+lines.push("");
+lines.push("Confidence:");
+lines.push('- 2+ signals \u2192 timing_confidence: "estimated", timing_source: "multi_signal"');
+lines.push('- 1 signal   \u2192 timing_confidence: "low"');
+lines.push('- 0 signals  \u2192 "low", timing_source: "stride_extrapolated"');
+lines.push("");
+lines.push("GAIT_MODIFIER \u2014 reduce HEAD_DIP weight when:");
+lines.push("- Character holds weapon in aimed/ready position");
+lines.push("- Character is crouching or in tactical stance");
+lines.push("- Character carries heavy object with both arms");
+lines.push("");
+lines.push("CRITICAL \u2014 GAIT_MODIFIER does NOT determine whether a character is moving.");
+lines.push("- armed_stance does NOT mean the character is stationary.");
+lines.push("- Movement: judge ONLY by body position change relative to background.");
+lines.push("- Weak HEAD_DIP signal does NOT imply the character is not walking.");
+lines.push("- Only classify as static when background-relative position is clearly unchanged.");
+lines.push("");
+lines.push("STRIDE INTERVAL EXTRAPOLATION:");
+lines.push("If first 2-3 contacts confirmed with consistent rhythm:");
+lines.push("- Calculate average_step_interval_ms, extrapolate subsequent contacts");
+lines.push('- timing_source: "stride_extrapolated", timing_confidence: "estimated"');
+lines.push("- Stop if: gait changes / camera cut / off-screen / rhythm disruption");
+lines.push("");
+lines.push("---");
+lines.push("CLOTH_MOVEMENT \u2014 TYPE A (LINKED):");
+lines.push("- Parent = FOOTSTEP or HAND event");
+lines.push("- start_ms = parent_ms - pre_offset / end_ms = parent_ms + post_offset");
+lines.push("- Default: FOOTSTEP parent \u2192 pre 80ms / post 300ms");
+lines.push("           HAND parent     \u2192 pre 50ms / post 250ms");
+lines.push("- Adjust based on cloth material (armor \u2192 longer, silk \u2192 shorter)");
+lines.push("");
+lines.push("CLOTH_MOVEMENT \u2014 TYPE B (INDEPENDENT):");
+lines.push("- Caused by body action alone (turn, spin, crouch)");
+lines.push("- start_ms = beginning / end_ms = fully settled");
+lines.push("");
+lines.push("HAND events:");
+lines.push("- Only output for distinct physical interactions:");
+lines.push("  grab|release|place|tap|knock|slide|press|open|close|lift|drop|throw|catch|wipe");
+lines.push("- Do NOT output for passive arm swing or hands at rest");
+lines.push("");
+lines.push("---");
+lines.push("FOOTSTEP category_fields:");
+lines.push("  surface_material: concrete|wood|tile|carpet|grass|gravel|soil|sand|metal|water|snow|ice|stone|rubber|other");
+lines.push("  weight_class: light|medium|heavy");
+lines.push("  gait_type: walk|run|creep|shuffle|stumble|jump_land|other");
+lines.push("  character_material: bare_foot|soft_shoe|hard_shoe|boot|heel|armor|hoof|claw|other");
+lines.push("  foot_side: left|right|unknown");
+lines.push("  visibility_class: FULL_BODY|PARTIAL_BODY");
+lines.push('  signals_used: ["head_dip","shoulder_oscillation","torso_sway","stride_extrapolated"]');
+lines.push("  gait_modifier: none|armed_stance|crouching|carrying_object|other");
+lines.push("  first_contact_reasoning: (required for first event of each sequence)");
+lines.push("  timing_source: foot_visible|multi_signal|head_dip|shoulder_oscillation|torso_sway|stride_extrapolated|estimated");
+lines.push("");
+lines.push("CLOTH_MOVEMENT LINKED fields: cloth_type, parent_event_id, parent_type, cloth_material, body_region, pre_offset_ms, post_offset_ms, intensity");
+lines.push("CLOTH_MOVEMENT INDEPENDENT fields: cloth_type, trigger_action, cloth_material, body_region, intensity");
+lines.push("HAND fields: hand_action, contact_material, weight_class");
+lines.push("");
+lines.push("---");
+lines.push("OUTPUT FORMAT:");
+lines.push("{");
+lines.push('  "analysis_meta": { "video_duration_ms", "detected_fps", "total_foley_events",');
+lines.push('    "characters_detected", "analysis_approach": "two_pass_on_screen_only", "pass1_summary" },');
+lines.push('  "characters": [{ "character_id", "description", "footwear", "clothing_material",');
+lines.push('    "first_clearly_identifiable_ms", "screen_time_ms",');
+lines.push('    "visibility_segments_ms": [{"class":"FULL_BODY"|"PARTIAL_BODY","start_ms","end_ms"}] }],');
+lines.push('  "sequences": [{ "sequence_id", "character_id", "sequence_type",');
+lines.push('    "sequence_start_ms", "sequence_end_ms", "step_count_visible",');
+lines.push('    "step_count_method": "foot_visible"|"signal_inferred", "average_step_interval_ms",');
+lines.push('    "visibility_class": "FULL_BODY"|"PARTIAL_BODY",');
+lines.push('    "signals_available": ["head_dip","shoulder_oscillation","torso_sway"],');
+lines.push('    "gait_modifier": "none"|"armed_stance"|"crouching"|"carrying_object" }],');
+lines.push('  "events": [{ "event_id", "sequence_id", "character_id",');
+lines.push('    "category": "FOOTSTEP"|"CLOTH_MOVEMENT"|"HAND",');
+lines.push('    "start_ms", "end_ms", "estimated_duration_ms",');
+lines.push('    "timing_confidence": "high"|"estimated"|"low",');
+lines.push('    "timing_note", "timing_range_ms", "on_screen_confirmed": true,');
+lines.push('    "description", "category_fields": { ... } }]');
+lines.push("}");
+lines.push("");
+lines.push("STRICT OUTPUT RULES:");
+lines.push('- Be deterministic. Same frames = same output.');
+lines.push('- timing_confidence "high" only for FULL_BODY');
+lines.push('- Never skip FOOTSTEP because feet not visible');
+lines.push('- Never output HAND for passive movement');
+lines.push('- Never collapse multiple footsteps into one event');
+lines.push('- Return only JSON.');
+lines.push("");
+lines.push("=================================================");
+lines.push("VERSION HISTORY");
+lines.push("=================================================");
+lines.push("v1.0       \uCD5C\uCD08. 4\uCE74\uD14C\uACE0\uB9AC, \uCE90\ub79D\ud130 \ucd94\uc801");
+lines.push("v1.1       \uBAA8\ub178 \uc804\uc6a9. FOOTSTEP/HAND L/R \uc81c\uAC70");
+lines.push("v2.0       CLOTH_MOVEMENT \ud1b5\ud569. first_contact_reasoning \ucd94\uac00");
+lines.push("v2.1       ON-SCREEN ONLY. on_screen_confirmed \uac15\uc81c");
+lines.push("v2.1 Final 2\ud328\uc2a4 \uAD6C\uc870\ud654. pass1_summary \ucd94\uac00");
+lines.push("v2.2       BODY VISIBILITY 3\ub2e8\uACC4 \uBD84\ub958");
+lines.push("v2.3       CLOTH LINKED/INDEPENDENT. STRIDE EXTRAPOLATION. Be deterministic");
+lines.push("v2.301     STATIC/FIRST FRAME RULE \uB864\uBC31");
+lines.push("v2.302     HEAD_DIP/SHOULDER/TORSO 3\uc2e0\ud638 \uad50\ucc28\uac80\uc99d");
+lines.push("v2.303     GAIT_MODIFIER \uc624\uc6a9 \uBC29\uc9c0. \uc2e0\ud638 \uc57d\ud568 \u2260 \uc774\ub3d9 \uc5c6\uc74c. \uc774\ub3d9 \uc5ec\uBD80\ub294 \ubc30\uacbd \ub300\ube44\ub85c\ub9cc \ud310\ub2e8");
+return lines.join("\n");
+}());
+
+document.getElementById('pP').textContent=`"""
+Foley Pipeline v2.1
+--------------------
+타이밍 계산: OpenCV + MediaPipe (3신호 자동 선택)
+분류만 Claude API에 맡김 (surface, material, category 등)
+
+변경사항 v2.1:
+- 3개 신호 동시 계산:
+    SIGNAL_A: 어깨 Y (수직 밥) — 측면/후방샷에 강함
+    SIGNAL_B: 어깨 X (좌우 스윙) — 정면 트래킹샷에 강함
+    SIGNAL_C: 머리 Y (수직 밥) — 보조 신호
+- 디트렌딩 적용: 카메라 이동 추세 제거 후 진동만 추출
+- SNR 기반 자동 선택
+- Claude는 타임스탬프 분류만 처리
+
+사용법:
+  python foley_pipeline_v2.py --video "영상경로" --api_key "sk-ant-..."
+"""
+
+import os, sys, json, base64, argparse, subprocess, tempfile, shutil, math
+from pathlib import Path
+
+EXTRACT_FPS   = 30
+SCAN_FPS      = 4
+MOTION_THRESH = 8.0
+MIN_WALK_SEC  = 0.5
+PAD_SEC       = 0.3
+SMOOTH_WINDOW = 5
+MIN_PEAK_DIST = 8
+MIN_PEAK_PROM = 2.0
+MODEL         = "claude-sonnet-4-20250514"
+MAX_TOKENS    = 4096
+
+SYSTEM_PROMPT = """You are a professional Foley supervisor AI.
+Footstep contact timestamps have already been detected by computer vision.
+Your job is ONLY to classify each contact: surface, footwear, weight, gait type, character.
+Output valid JSON only. No explanation, no markdown."""
+
+USER_PROMPT_TEMPLATE = """Footstep contact timestamps detected by shoulder oscillation analysis.
+These timestamps are frame-accurate. Do NOT change them.
+
+Duration: {duration_ms}ms
+Contacts (ms): {contacts_json}
+
+Classify each: surface_material, character_material, weight_class, gait_type, foot_side, character_id
+Also identify CLOTH_MOVEMENT or HAND events from sample images.
+
+Return JSON:
+{{
+  "analysis_meta": {{"video_duration_ms":{duration_ms},"detected_fps":{fps},"total_foley_events":0,"characters_detected":1,"analysis_approach":"opencv_shoulder_tracking","pass1_summary":""}},
+  "characters":[{{"character_id":"CHAR_A","description":"","footwear":"","clothing_material":"","first_clearly_identifiable_ms":0,"screen_time_ms":[[0,{duration_ms}]],"visibility_segments_ms":[{{"class":"PARTIAL_BODY","start_ms":0,"end_ms":{duration_ms}}}],"notes":""}}],
+  "sequences":[{{"sequence_id":"SEQ_001","character_id":"CHAR_A","sequence_type":"walk","sequence_start_ms":0,"sequence_end_ms":{duration_ms},"step_count_visible":0,"step_count_method":"opencv_shoulder_tracking","average_step_interval_ms":0,"visibility_class":"PARTIAL_BODY","signals_available":["shoulder_oscillation"],"gait_modifier":"none","notes":""}}],
+  "events":[{{"event_id":"FOL_001","sequence_id":"SEQ_001","character_id":"CHAR_A","category":"FOOTSTEP","start_ms":<USE EXACT TIMESTAMP>,"end_ms":<start+80>,"estimated_duration_ms":80,"timing_confidence":"estimated","timing_note":"opencv shoulder tracking","timing_range_ms":null,"on_screen_confirmed":true,"description":"","category_fields":{{"surface_material":"","weight_class":"","gait_type":"","character_material":"","foot_side":"","visibility_class":"PARTIAL_BODY","signals_used":["shoulder_oscillation"],"gait_modifier":"none","timing_source":"opencv_shoulder_tracking"}}}}]
+}}"""
+
+
+def run_ffmpeg(cmd):
+    r = subprocess.run(cmd, capture_output=True, text=True)
+    if r.returncode != 0:
+        print(f"  ffmpeg 오류: {r.stderr[-300:]}")
+        return False
+    return True
+
+def get_video_duration(path):
+    cmd = ["ffprobe","-v","quiet","-print_format","json","-show_streams",path]
+    r = subprocess.run(cmd, capture_output=True, text=True)
+    if r.returncode != 0: return None
+    for s in json.loads(r.stdout).get("streams",[]):
+        if s.get("codec_type")=="video": return float(s.get("duration",0))
+    return None
+
+def extract_frames(path, out_dir, fps, start_ms=None, end_ms=None):
+    pattern = os.path.join(out_dir, "frame_%06d.jpg")
+    cmd = ["ffmpeg"]
+    if start_ms is not None: cmd += ["-ss", str(start_ms/1000)]
+    cmd += ["-i", path]
+    if end_ms is not None and start_ms is not None:
+        cmd += ["-t", str((end_ms-start_ms)/1000)]
+    cmd += ["-vf",f"fps={fps}","-q:v","2",pattern,"-y","-loglevel","error"]
+    return run_ffmpeg(cmd)
+
+def detect_motion_segments(path, scan_dir, fps, thresh, min_walk_sec, pad_sec, dur_ms):
+    try: import cv2, numpy as np
+    except ImportError: return [(0, dur_ms)]
+    extract_frames(path, scan_dir, fps)
+    files = sorted(Path(scan_dir).glob("frame_*.jpg"))
+    if not files: return [(0, dur_ms)]
+    motion_ms, prev = [], None
+    for i,f in enumerate(files):
+        t = int(i*1000/fps)
+        img = cv2.imread(str(f), cv2.IMREAD_GRAYSCALE)
+        if img is None: continue
+        img = cv2.resize(img,(320,180))
+        if prev is not None:
+            if np.mean(np.abs(img.astype(float)-prev.astype(float))) > thresh:
+                motion_ms.append(t)
+        prev = img
+    if not motion_ms: return [(0, dur_ms)]
+    gap = int(1000/fps*3); min_ms = int(min_walk_sec*1000); pad = int(pad_sec*1000)
+    segs=[]; ss=motion_ms[0]; se=motion_ms[0]
+    for t in motion_ms[1:]:
+        if t-se<=gap: se=t
+        else:
+            if se-ss>=min_ms: segs.append((max(0,ss-pad),min(dur_ms,se+pad)))
+            ss=t; se=t
+    if se-ss>=min_ms: segs.append((max(0,ss-pad),min(dur_ms,se+pad)))
+    return segs if segs else [(0,dur_ms)]
+
+def smooth(vals, w):
+    h=w//2; return [sum(vals[max(0,i-h):min(len(vals),i+h+1)])/len(vals[max(0,i-h):min(len(vals),i+h+1)]) for i in range(len(vals))]
+
+def detrend(vals, w):
+    trend = smooth(vals, w)
+    return [v-t for v,t in zip(vals,trend)]
+
+def signal_snr(vals):
+    if len(vals)<8: return 0.0
+    sm = smooth(vals,3); mean = sum(sm)/len(sm)
+    centered = [v-mean for v in sm]
+    crossings = sum(1 for i in range(1,len(centered)) if centered[i-1]*centered[i]<0)
+    std = (sum(v**2 for v in centered)/len(centered))**0.5
+    noise = sum(abs(v-s) for v,s in zip(vals,sm))/len(vals)+1e-6
+    return std*(crossings/len(centered))/noise
+
+def find_local_minima(vals, min_dist, min_prom):
+    minima=[]; n=len(vals)
+    for i in range(1,n-1):
+        if vals[i]<=vals[i-1] and vals[i]<=vals[i+1]:
+            lm = max(vals[max(0,i-min_dist):i]) if i>0 else vals[i]
+            rm = max(vals[i+1:min(n,i+min_dist+1)]) if i<n-1 else vals[i]
+            if min(lm,rm)-vals[i] >= min_prom:
+                if not minima or i-minima[-1]>=min_dist: minima.append(i)
+                elif vals[i]<vals[minima[-1]]: minima[-1]=i
+    return minima
+
+def track_multi_signal(frames_dir, fps, seg_start):
+    try:
+        import cv2, mediapipe as mp
+        from mediapipe.tasks import python as mp_python
+        from mediapipe.tasks.python import vision as mp_vision
+    except ImportError: return []
+    files = sorted(Path(frames_dir).glob("frame_*.jpg"))
+    if not files: return []
+    sh_y=[]; sh_x=[]; head_y=[]; ts=[]; valid=0; prev=None
+    try:
+        model_path = os.path.join(tempfile.gettempdir(),"pose_landmarker_lite.task")
+        if not os.path.exists(model_path):
+            import urllib.request
+            urllib.request.urlretrieve(
+                "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/latest/pose_landmarker_lite.task",
+                model_path)
+        opts = mp_vision.PoseLandmarkerOptions(
+            base_options=mp_python.BaseOptions(model_asset_path=model_path),
+            output_segmentation_masks=False,
+            min_pose_detection_confidence=0.3,
+            min_pose_presence_confidence=0.3,
+            min_tracking_confidence=0.3)
+        with mp_vision.PoseLandmarker.create_from_options(opts) as lm:
+            for i,f in enumerate(files):
+                t_ms = seg_start + int(i*1000/fps)
+                img = cv2.imread(str(f))
+                if img is None: continue
+                h,w = img.shape[:2]
+                r = lm.detect(mp.Image(image_format=mp.ImageFormat.SRGB, data=cv2.cvtColor(img,cv2.COLOR_BGR2RGB)))
+                if r.pose_landmarks and len(r.pose_landmarks)>0:
+                    l = r.pose_landmarks[0]
+                    vals=((l[11].y+l[12].y)/2*h,(l[11].x+l[12].x)/2*w,l[0].y*h)
+                    sh_y.append(vals[0]); sh_x.append(vals[1]); head_y.append(vals[2])
+                    ts.append(t_ms); prev=vals; valid+=1
+                elif prev:
+                    sh_y.append(prev[0]); sh_x.append(prev[1]); head_y.append(prev[2]); ts.append(t_ms)
+    except Exception as e:
+        print(f"  MediaPipe 오류: {e}"); return []
+    if valid<5: print(f"  경고: 유효 포즈 {valid}장"); return []
+    print(f"  유효 포즈: {valid}/{len(files)}장")
+    dw = fps*2
+    signals = {
+        'shoulder_Y': detrend(sh_y,dw),
+        'shoulder_X': detrend(sh_x,dw),
+        'head_Y':     detrend(head_y,dw)
+    }
+    snrs = {k: signal_snr(v) for k,v in signals.items()}
+    for k,v in snrs.items(): print(f"  SNR {k}: {v:.1f}")
+    best = max(snrs, key=snrs.get)
+    print(f"  → 선택: {best} (SNR={snrs[best]:.1f})")
+    sm = smooth(signals[best], SMOOTH_WINDOW)
+    idxs = find_local_minima(sm, MIN_PEAK_DIST, MIN_PEAK_PROM)
+    contacts = [ts[i] for i in idxs]
+    print(f"  감지된 접지: {len(contacts)}개 → {contacts}")
+    return contacts, {k:{'raw':sh_y if k=='shoulder_Y' else sh_x if k=='shoulder_X' else head_y,'smoothed':sm,'snr':snrs[k]} for k in signals}, ts, best
+
+def main():
+    p = argparse.ArgumentParser()
+    p.add_argument("--video",   required=True)
+    p.add_argument("--api_key", required=True)
+    p.add_argument("--output",  default=None)
+    p.add_argument("--fps",     type=int, default=EXTRACT_FPS)
+    p.add_argument("--no_api",  action="store_true")
+    args = p.parse_args()
+    if not os.path.exists(args.video): print(f"오류: 없음: {args.video}"); sys.exit(1)
+    name = Path(args.video).stem
+    out  = args.output or f"{name}_foley_v2.json"
+    dur  = get_video_duration(args.video)
+    if not dur: print("오류: 길이 읽기 실패"); sys.exit(1)
+    dur_ms = int(dur*1000)
+    print(f"\\n=== Foley Pipeline v2.1 ===\\n영상: {args.video}\\n길이: {dur:.2f}s")
+    tmpdir = tempfile.mkdtemp(prefix="foley2_")
+    try:
+        print("\\n[1/4] 보행 구간 감지...")
+        scan_dir = os.path.join(tmpdir,"scan"); os.makedirs(scan_dir)
+        segs = detect_motion_segments(args.video,scan_dir,SCAN_FPS,MOTION_THRESH,MIN_WALK_SEC,PAD_SEC,dur_ms)
+        print(f"  → {len(segs)}개 구간")
+        all_contacts=[]; all_signals={}; all_ts=[]; all_frames=[]; best_name="unknown"
+        print(f"\\n[2/4] {args.fps}fps 추출 + 3신호 추적...")
+        for idx,(ss,se) in enumerate(segs):
+            seg_dir=os.path.join(tmpdir,f"seg_{idx:02d}"); os.makedirs(seg_dir)
+            extract_frames(args.video,seg_dir,args.fps,ss,se)
+            r = track_multi_signal(seg_dir,args.fps,ss)
+            if r and len(r)==4:
+                c,sigs,t,bn = r
+                all_contacts.extend(c); all_signals=sigs; all_ts.extend(t); best_name=bn
+            all_frames.extend([str(f) for f in sorted(Path(seg_dir).glob("frame_*.jpg"))])
+        print(f"\\n접지: {len(all_contacts)}개 → {all_contacts}")
+        if args.no_api:
+            json.dump({"opencv_contacts_ms":all_contacts,"best_signal":best_name},open(out,"w"),indent=2)
+            print(f"저장: {out}"); return
+        if not all_contacts: print("접지 없음"); sys.exit(1)
+        step=max(1,len(all_frames)//10); sample=all_frames[::step][:10]
+        import anthropic
+        client=anthropic.Anthropic(api_key=args.api_key)
+        content=[{"type":"image","source":{"type":"base64","media_type":"image/jpeg","data":base64.standard_b64encode(open(f,"rb").read()).decode()}} for f in sample]
+        content.append({"type":"text","text":USER_PROMPT_TEMPLATE.format(duration_ms=dur_ms,fps=args.fps,contacts_json=json.dumps(all_contacts),scene_desc="")})
+        resp=client.messages.create(model=MODEL,max_tokens=MAX_TOKENS,system=SYSTEM_PROMPT,messages=[{"role":"user","content":content}])
+        txt=resp.content[0].text.strip()
+        if txt.startswith("\`\`\`"): txt=txt.split("\\n",1)[1].rsplit("\`\`\`",1)[0]
+        result=json.loads(txt)
+        events=result.get("events",[])
+        fs=[e for e in events if "FOOT" in e.get("category","").upper()]
+        api_ts=sorted([e["start_ms"] for e in fs]); cv_ts=sorted(all_contacts)
+        if api_ts!=cv_ts:
+            print("경고: Claude가 타임스탬프 수정 → OpenCV 값으로 복원")
+            idx=0
+            for ev in events:
+                if "FOOT" in ev.get("category","").upper() and idx<len(cv_ts):
+                    ev["start_ms"]=cv_ts[idx]; ev["end_ms"]=cv_ts[idx]+80; idx+=1
+        json.dump(result,open(out,"w",encoding="utf-8"),ensure_ascii=False,indent=2)
+        print(f"\\n완료 — 이벤트:{len(events)} FOOTSTEP:{len(fs)} → {out}")
+    finally:
+        shutil.rmtree(tmpdir,ignore_errors=True)
+
+if __name__=="__main__":
+    main()`;
+
+document.getElementById('pA2').textContent = (function(){
+var L = [];
+L.push("# Ambience Analysis Prompt \u2014 v1.0");
+L.push("> Claude \uAE30\uBC18 Ambience \uD0C0\uC784\ucf54\ub4dc \uCD94\uCD9C");
+L.push("> \uC124\uACC4 \uC6D0\uCE59: \uC804 \uAD6C\uAC04 \uCEE4\uBC84 / \uC528 \uC804\uD658 \uD06C\uB85C\uC2A4\uD398\uC774\uB4DC / \uB808\uC774\uC5B4 \uC9C0\uC6D0");
+L.push("");
+L.push("\uBAA9\uD45C \uBC94\uC704: Room Tone / Background Atmosphere / Environment / Nature / Crowd / Weather");
+L.push("Foley / SFX / Music / Dialogue\uB294 \uC774 \uD504\uB86C\uD504\uD2B8 \uBC94\uC704 \uBC16\uC774\uB2E4.");
+L.push("");
+L.push("=================================================");
+L.push("SYSTEM PROMPT");
+L.push("=================================================");
+L.push("You are a professional sound designer AI with expertise in film and game post-production.");
+L.push("");
+L.push("Your sole task is to analyze the provided video frames and extract a complete Ambience sound timeline.");
+L.push("");
+L.push("You do NOT analyze music, dialogue, SFX, or Foley sounds.");
+L.push("You focus exclusively on background ambience:");
+L.push("room tones, environmental atmosphere, nature sounds, crowd presence, weather, and spatial characteristics.");
+L.push("");
+L.push("COVERAGE RULE \u2014 MANDATORY:");
+L.push("Every millisecond of the video must be covered by at least one ambience layer.");
+L.push("There must be NO silent gaps in the ambience timeline.");
+L.push("If a scene is ambiguous, default to a neutral room tone rather than leaving it empty.");
+L.push("");
+L.push("CROSSFADE RULE \u2014 MANDATORY:");
+L.push("At every scene transition, ambience layers must overlap by 1 frame (~33ms at 30fps, ~17ms at 60fps).");
+L.push("- Outgoing layer: extend end_ms by +1 frame beyond the cut point");
+L.push("- Incoming layer: start start_ms by -1 frame before the cut point");
+L.push("This overlap enables smooth crossfade and prevents click/tick noise at edit points.");
+L.push("");
+L.push("Output must be valid JSON only. No explanation, no markdown, no extra text.");
+L.push("");
+L.push("=================================================");
+L.push("USER PROMPT");
+L.push("=================================================");
+L.push("Analyze the provided video frames and extract a complete Ambience sound timeline.");
+L.push("");
+L.push("ANALYSIS WORKFLOW \u2014 TWO PASS REQUIRED");
+L.push("");
+L.push("PASS 1 \u2014 Full Context Survey");
+L.push("Survey the entire frame sequence and establish:");
+L.push("");
+L.push("1. Scene structure");
+L.push("   - Identify ALL scene/shot boundaries (hard cuts, dissolves, fades)");
+L.push("   - Note camera movement patterns (static / pan / zoom / handheld)");
+L.push("   - Note lighting conditions (interior / exterior / day / night / artificial)");
+L.push("");
+L.push("2. Space & environment analysis per scene");
+L.push("   For each scene identify:");
+L.push("   - Space type: interior / exterior");
+L.push("   - Location: (e.g. forest, corridor, office, street, train, warehouse)");
+L.push("   - Space size: intimate / small / medium / large / vast");
+L.push("   - Acoustic character: dry / live / reverberant / echo");
+L.push("   - Background activity: empty / sparse / moderate / busy / crowd");
+L.push("   - Weather (if exterior): calm / wind / rain / storm");
+L.push("   - Time of day (if determinable): day / dusk / night");
+L.push("");
+L.push("3. Ambience layer plan");
+L.push("   For each scene, decide:");
+L.push("   - PRIMARY layer: the dominant background sound");
+L.push("   - SECONDARY layers (optional): additional detail layers (max 2)");
+L.push("   - Layer count: keep to 1-3 layers per scene");
+L.push("");
+L.push("4. Scene transition map");
+L.push("   List all transition points (ms) and plan crossfade overlaps.");
+L.push("   Apply +1 frame to outgoing layer end_ms.");
+L.push("   Apply -1 frame to incoming layer start_ms.");
+L.push("");
+L.push("Only after completing Pass 1, proceed to Pass 2.");
+L.push("");
+L.push("PASS 2 \u2014 Layer Extraction");
+L.push("Extract individual ambience layers following the coverage and crossfade rules.");
+L.push("");
+L.push("---");
+L.push("AMBIENCE CATEGORY DEFINITIONS");
+L.push("");
+L.push("ROOM_TONE    \u2014 enclosed space acoustic presence. Empty corridor, quiet office.");
+L.push("ENVIRONMENT  \u2014 outdoor/indoor atmospheric sound with clear character. Forest, city street, station.");
+L.push("NATURE       \u2014 specific natural elements. Birds, wind, insects, rain, water.");
+L.push("CROWD        \u2014 human background presence. Party, restaurant, hallway.");
+L.push("WEATHER      \u2014 atmospheric conditions. Rain, thunder, wind, snow silence.");
+L.push("MECHANICAL   \u2014 continuous mechanical/electrical background. HVAC, engine, server room.");
+L.push("");
+L.push("---");
+L.push("OUTPUT FORMAT:");
+L.push("{");
+L.push('  "analysis_meta": {');
+L.push('    "video_duration_ms": <integer>,');
+L.push('    "detected_fps": <float>,');
+L.push('    "total_ambience_layers": <integer>,');
+L.push('    "scene_count": <integer>,');
+L.push('    "analysis_approach": "two_pass_ambience",');
+L.push('    "pass1_summary": "<brief summary>"');
+L.push("  },");
+L.push('  "scenes": [{');
+L.push('    "scene_id": "SCN_001",');
+L.push('    "start_ms", "end_ms", "location",');
+L.push('    "space_type": "interior"|"exterior",');
+L.push('    "space_size": "intimate"|"small"|"medium"|"large"|"vast",');
+L.push('    "acoustic_character": "dry"|"live"|"reverberant"|"echo",');
+L.push('    "lighting": "day"|"dusk"|"night"|"artificial"|"mixed",');
+L.push('    "notes"');
+L.push("  }],");
+L.push('  "transitions": [{');
+L.push('    "transition_id": "TRN_001",');
+L.push('    "cut_point_ms", "from_scene_id", "to_scene_id",');
+L.push('    "transition_type": "hard_cut"|"dissolve"|"fade",');
+L.push('    "crossfade_ms"');
+L.push("  }],");
+L.push('  "layers": [{');
+L.push('    "layer_id": "AMB_001",');
+L.push('    "scene_id",');
+L.push('    "layer_role": "primary"|"secondary",');
+L.push('    "ambience_type": "ROOM_TONE"|"ENVIRONMENT"|"NATURE"|"CROWD"|"WEATHER"|"MECHANICAL",');
+L.push('    "start_ms", "end_ms", "duration_ms",');
+L.push('    "crossfade_in_ms", "crossfade_out_ms",');
+L.push('    "description", "location_detail",');
+L.push('    "intensity": "subtle"|"moderate"|"prominent",');
+L.push('    "stereo_field": "mono"|"stereo"|"wide",');
+L.push('    "distance": "close"|"mid"|"far"|"very_far",');
+L.push('    "notes"');
+L.push("  }]");
+L.push("}");
+L.push("");
+L.push("---");
+L.push("STRICT OUTPUT RULES:");
+L.push("- Every ms MUST be covered by at least one primary layer (no silent gaps)");
+L.push("- Crossfade overlap MUST be applied at every scene transition");
+L.push("- Layer count per scene: 1 minimum (primary), 3 maximum total");
+L.push("- Do NOT include Foley, SFX, music, or dialogue");
+L.push("- Be deterministic. Same frames = same output.");
+L.push("- Return only JSON. No other text.");
+L.push("");
+L.push("=================================================");
+L.push("VERSION HISTORY");
+L.push("=================================================");
+L.push("v1.0   \uCD5C\uCD08 \uC791\uC131. \uC804 \uAD6C\uAC04 \uCEE4\uBC84 \uADDC\uCE59. \uC528 \uC804\uD658 \uD06C\uB85C\uC2A4\uD398\uC774\uB4DC. PRIMARY/SECONDARY \uB808\uC774\uC5B4. 6\uAC1C \uCE74\uD14C\uACE0\uB9AC.");
+L.push("");
+L.push("=================================================");
+L.push("DESIGN PRINCIPLES");
+L.push("=================================================");
+L.push("\uBB34\uC74C \uAD6C\uAC04 \uBC1C\uC0DD           \u2192 \uC804 \uAD6C\uAC04 \uCEE4\uBC84 \uAC15\uC81C. PRIMARY \uB808\uC774\uC5B4 \uD544\uC218");
+L.push("\uC528 \uC804\uD658 \uD2F1\uB178\uC774\uC988       \u2192 +1\uD504\uB808\uC784 \uD06C\uB85C\uC2A4\uD398\uC774\uB4DC \uC624\uBC84\uB7A9 \uAC15\uC81C");
+L.push("\uB808\uC774\uC5B4 \uACFC\uB2E4            \u2192 \uC528\uB2F9 \uCD5C\uB300 3\uB808\uC774\uC5B4 \uC81C\uD55C");
+L.push("\uC549\uBE44\uC5B8\uC2A4 \uC815\uC758 \uBD88\uBA85\uD655  \u2192 6\uAC1C \uCE74\uD14C\uACE0\uB9AC \uBA85\uD655\uD788 \uC815\uC758");
+L.push("\uACF5\uAC04\uAC10 \uC815\uBCF4 \uB204\uB77D      \u2192 space_size / acoustic_character / distance \uD544\uB4DC");
+return L.join("\n");
+}());
+</script>
+</body>
+</html>

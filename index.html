@@ -766,10 +766,12 @@ async function runA(){
 }
 
 async function cC(fr,ts,dur,type){
-  // 로컬 서버 경유 (server.py 실행 중일 때)
-  // 직접 호출은 브라우저 CORS 정책으로 차단됨
+  // 로컬이면 localhost:5000, 배포 환경이면 Render URL 자동 감지
+  const API_BASE=window.location.hostname==='localhost'||window.location.hostname==='127.0.0.1'
+    ?'http://localhost:5000'
+    :'https://ai-audio-sync-demo.onrender.com';
   const payload={frames:fr,timestamps:ts,duration_ms:dur,type};
-  const r=await fetch('http://localhost:5000/analyze',{
+  const r=await fetch(API_BASE+'/analyze',{
     method:'POST',
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify(payload)
